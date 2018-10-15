@@ -1,0 +1,14 @@
+int num = ask("To what number");
+
+from (12.34) to (num) as i {
+	decide(i);
+}
+
+func null decide(int i) {
+	if (i % 3) {
+		print("Fizz");
+	}
+	elif (i % 5) {
+		print("Buzz");
+	}
+}
