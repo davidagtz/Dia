@@ -14,7 +14,8 @@ int main(int argc, char **argv)
 		cout << tokens.at(i).toString() << endl;
 	}
 
-	// AST::ExprAST head = Parser(tokens).parsePrimary();
+	Parser parse(move(tokens));
+	unique_ptr<AST::Base> head = parse.parsePrimary();
 
 	return 0;
 }

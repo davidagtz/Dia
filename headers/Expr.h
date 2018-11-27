@@ -4,66 +4,66 @@
 namespace AST
 {
 
-class BaseAST
+class Base
 {
   public:
-	virtual ~BaseAST(){};
+	virtual ~Base() = default;
 };
 
-class NumberAST : public BaseAST
+class Number : public Base
 {
 	long long val;
 
   public:
-	NumberAST(long long num) : val(num){};
+	Number(long long num) : val(num){};
 };
 
-class VariableAST : public BaseAST
+class Variable : public Base
 {
 	std::string name;
 
   public:
-	VariableAST(std::string n) : name(n){};
+	Variable(std::string n) : name(n){};
 };
 
-class BinaryAST : public BaseAST
+class Binary : public Base
 {
 	std::string op;
-	std::unique_ptr<BaseAST> LHS;
-	std::unique_ptr<BaseAST> RHS;
+	std::unique_ptr<Base> LHS;
+	std::unique_ptr<Base> RHS;
 
   public:
-	BinaryAST(std::string oper, std::unique_ptr<BaseAST> left, std::unique_ptr<BaseAST> right)
+	Binary(std::string oper, std::unique_ptr<Base> left, std::unique_ptr<Base> right)
 		: op(oper), LHS(std::move(left)), RHS(std::move(right)){};
 };
 
-class CallAST : public BaseAST
+class Call : public Base
 {
 	std::string callee;
-	std::vector<std::unique_ptr<BaseAST>> args;
+	std::vector<std::unique_ptr<Base>> args;
 
   public:
-	CallAST(std::string callee, std::vector<std::unique_ptr<BaseAST>> arguments)
+	Call(std::string callee, std::vector<std::unique_ptr<Base>> arguments)
 		: callee(callee), args(std::move(arguments)){};
 };
 
-class PrototypeAST : public BaseAST
+class Prototype : public Base
 {
 	std::string name;
 	std::vector<std::string> args;
 
   public:
-	PrototypeAST(std::string name, std::vector<std::string> args)
+	Prototype(std::string name, std::vector<std::string> args)
 		: name(name), args(std::move(args)){};
 };
 
-class FunctionAST : public BaseAST
+class Function : public Base
 {
-	std::unique_ptr<PrototypeAST> prototype;
-	std::unique_ptr<BaseAST> body;
+	std::unique_ptr<Prototype> prototype;
+	std::unique_ptr<Base> body;
 
   public:
-	FunctionAST(std::unique_ptr<PrototypeAST> proto, std::unique_ptr<BaseAST> body)
+	Function(std::unique_ptr<Prototype> proto, std::unique_ptr<Base> body)
 		: prototype(std::move(proto)), body(std::move(body)){};
 };
 } // namespace AST
