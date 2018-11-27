@@ -1,0 +1,289 @@
+The target system is: Generic -  - 
+The host system is: Windows - 10.0.17134 - AMD64
+Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+Compiler: C:/Program Files/LLVM/bin/clang-cl.exe 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.exe"
+
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+Compiler: C:/Program Files/LLVM/bin/clang-cl.exe 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.exe"
+
+Determining if the C compiler works passed with the following output:
+Change Dir: C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:/Users/David/Scripts/ninja.exe" "cmTC_12fa2"
+[1/2] Building C object CMakeFiles\cmTC_12fa2.dir\testCCompiler.c.obj
+[2/2] Linking C executable cmTC_12fa2
+
+
+Determining if the CXX compiler works passed with the following output:
+Change Dir: C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:/Users/David/Scripts/ninja.exe" "cmTC_412da"
+[1/2] Building CXX object CMakeFiles\cmTC_412da.dir\testCXXCompiler.cxx.obj
+[2/2] Linking CXX executable cmTC_412da
+
+
+Determining if the include file errno.h exists passed with the following output:
+Change Dir: C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:/Users/David/Scripts/ninja.exe" "cmTC_6de43"
+[1/2] Building C object CMakeFiles\cmTC_6de43.dir\CheckIncludeFile.c.obj
+[2/2] Linking C executable cmTC_6de43
+
+
+Determining if the include file fcntl.h exists passed with the following output:
+Change Dir: C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:/Users/David/Scripts/ninja.exe" "cmTC_e139c"
+[1/2] Building C object CMakeFiles\cmTC_e139c.dir\CheckIncludeFile.c.obj
+[2/2] Linking C executable cmTC_e139c
+
+
+Determining if the include file malloc.h exists passed with the following output:
+Change Dir: C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:/Users/David/Scripts/ninja.exe" "cmTC_80699"
+[1/2] Building C object CMakeFiles\cmTC_80699.dir\CheckIncludeFile.c.obj
+[2/2] Linking C executable cmTC_80699
+
+
+Determining if the include file signal.h exists passed with the following output:
+Change Dir: C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:/Users/David/Scripts/ninja.exe" "cmTC_2466c"
+[1/2] Building C object CMakeFiles\cmTC_2466c.dir\CheckIncludeFile.c.obj
+[2/2] Linking C executable cmTC_2466c
+
+
+Determining if the include file sys/stat.h exists passed with the following output:
+Change Dir: C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:/Users/David/Scripts/ninja.exe" "cmTC_c86b4"
+[1/2] Building C object CMakeFiles\cmTC_c86b4.dir\CheckIncludeFile.c.obj
+[2/2] Linking C executable cmTC_c86b4
+
+
+Determining if the include file sys/types.h exists passed with the following output:
+Change Dir: C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:/Users/David/Scripts/ninja.exe" "cmTC_768fd"
+[1/2] Building C object CMakeFiles\cmTC_768fd.dir\CheckIncludeFile.c.obj
+[2/2] Linking C executable cmTC_768fd
+
+
+Determining if the include file fenv.h exists passed with the following output:
+Change Dir: C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:/Users/David/Scripts/ninja.exe" "cmTC_37a8d"
+[1/2] Building C object CMakeFiles\cmTC_37a8d.dir\CheckIncludeFile.c.obj
+[2/2] Linking C executable cmTC_37a8d
+
+
+Determining if the FE_ALL_EXCEPT exist passed with the following output:
+Change Dir: C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:/Users/David/Scripts/ninja.exe" "cmTC_a1f35"
+[1/2] Building C object CMakeFiles\cmTC_a1f35.dir\CheckSymbolExists.c.obj
+[2/2] Linking C executable cmTC_a1f35
+
+File C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <fenv.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef FE_ALL_EXCEPT
+  return ((int*)(&FE_ALL_EXCEPT))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the FE_INEXACT exist passed with the following output:
+Change Dir: C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:/Users/David/Scripts/ninja.exe" "cmTC_f8e19"
+[1/2] Building C object CMakeFiles\cmTC_f8e19.dir\CheckSymbolExists.c.obj
+[2/2] Linking C executable cmTC_f8e19
+
+File C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <fenv.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef FE_INEXACT
+  return ((int*)(&FE_INEXACT))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Performing C SOURCE FILE Test C_SUPPORTS_WERROR_UNGUARDED_AVAILABILITY_NEW succeeded with the following output:
+Change Dir: C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:/Users/David/Scripts/ninja.exe" "cmTC_d40c3"
+[1/2] Building C object CMakeFiles\cmTC_d40c3.dir\src.c.obj
+[2/2] Linking C executable cmTC_d40c3
+
+Source file was:
+int main(void) { return 0; }
+Determining if the strerror exist passed with the following output:
+Change Dir: C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:/Users/David/Scripts/ninja.exe" "cmTC_3d25b"
+[1/2] Building C object CMakeFiles\cmTC_3d25b.dir\CheckSymbolExists.c.obj
+CheckSymbolExists.c(8,19):  warning: 'strerror' is deprecated: This function or variable may be unsafe. Consider using strerror_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [-Wdeprecated-declarations]
+  return ((int*)(&strerror))[argc];
+                  ^
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.16299.0\ucrt\string.h(180,16):  note: 'strerror' has been explicitly marked deprecated here
+_Check_return_ _CRT_INSECURE_DEPRECATE(strerror_s)
+               ^
+C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.12.25827\include\vcruntime.h(255,55):  note: expanded from macro '_CRT_INSECURE_DEPRECATE'
+        #define _CRT_INSECURE_DEPRECATE(_Replacement) _CRT_DEPRECATE_TEXT(    \
+                                                      ^
+C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.12.25827\include\vcruntime.h(245,47):  note: expanded from macro '_CRT_DEPRECATE_TEXT'
+#define _CRT_DEPRECATE_TEXT(_Text) __declspec(deprecated(_Text))
+                                              ^
+1 warning generated.
+[2/2] Linking C executable cmTC_3d25b
+
+File C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <string.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef strerror
+  return ((int*)(&strerror))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the strerror_s exist passed with the following output:
+Change Dir: C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:/Users/David/Scripts/ninja.exe" "cmTC_72377"
+[1/2] Building C object CMakeFiles\cmTC_72377.dir\CheckSymbolExists.c.obj
+[2/2] Linking C executable cmTC_72377
+
+File C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <string.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef strerror_s
+  return ((int*)(&strerror_s))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Performing C++ SOURCE FILE Test HAVE_CXX_ATOMICS_WITHOUT_LIB succeeded with the following output:
+Change Dir: C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:/Users/David/Scripts/ninja.exe" "cmTC_8f66d"
+[1/2] Building CXX object CMakeFiles\cmTC_8f66d.dir\src.cxx.obj
+clang-cl.exe: warning: unknown argument ignored in clang-cl: '-std=c++11' [-Wunknown-argument]
+[2/2] Linking CXX executable cmTC_8f66d
+clang-cl.exe: warning: unknown argument ignored in clang-cl: '-std=c++11' [-Wunknown-argument]
+
+Source file was:
+
+#include <atomic>
+std::atomic<int> x;
+int main() {
+  return x;
+}
+
+Performing C++ SOURCE FILE Test HAVE_CXX_ATOMICS64_WITHOUT_LIB succeeded with the following output:
+Change Dir: C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:/Users/David/Scripts/ninja.exe" "cmTC_c4564"
+[1/2] Building CXX object CMakeFiles\cmTC_c4564.dir\src.cxx.obj
+clang-cl.exe: warning: unknown argument ignored in clang-cl: '-std=c++11' [-Wunknown-argument]
+[2/2] Linking CXX executable cmTC_c4564
+clang-cl.exe: warning: unknown argument ignored in clang-cl: '-std=c++11' [-Wunknown-argument]
+
+Source file was:
+
+#include <atomic>
+#include <cstdint>
+std::atomic<uint64_t> x (0);
+int main() {
+  uint64_t i = x.load(std::memory_order_relaxed);
+  return 0;
+}
+
+Performing C++ SOURCE FILE Test LLVM_HAS_ATOMICS succeeded with the following output:
+Change Dir: C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:/Users/David/Scripts/ninja.exe" "cmTC_19ad7"
+[1/2] Building CXX object CMakeFiles\cmTC_19ad7.dir\src.cxx.obj
+[2/2] Linking CXX executable cmTC_19ad7
+
+Source file was:
+
+#ifdef _MSC_VER
+#include <windows.h>
+#endif
+int main() {
+#ifdef _MSC_VER
+        volatile LONG val = 1;
+        MemoryBarrier();
+        InterlockedCompareExchange(&val, 0, 1);
+        InterlockedIncrement(&val);
+        InterlockedDecrement(&val);
+#else
+        volatile unsigned long val = 1;
+        __sync_synchronize();
+        __sync_val_compare_and_swap(&val, 1, 0);
+        __sync_add_and_fetch(&val, 1);
+        __sync_sub_and_fetch(&val, 1);
+#endif
+        return 0;
+      }
+
+Performing C++ SOURCE FILE Test SUPPORTS_VARIADIC_MACROS_FLAG succeeded with the following output:
+Change Dir: C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:/Users/David/Scripts/ninja.exe" "cmTC_a33bc"
+[1/2] Building CXX object CMakeFiles\cmTC_a33bc.dir\src.cxx.obj
+[2/2] Linking CXX executable cmTC_a33bc
+
+Source file was:
+int main() { return 0; }
+Performing C++ SOURCE FILE Test SUPPORTS_GNU_ZERO_VARIADIC_MACRO_ARGUMENTS_FLAG succeeded with the following output:
+Change Dir: C:/Users/David/Documents/School/Dia/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:/Users/David/Scripts/ninja.exe" "cmTC_40ff5"
+[1/2] Building CXX object CMakeFiles\cmTC_40ff5.dir\src.cxx.obj
+[2/2] Linking CXX executable cmTC_40ff5
+
+Source file was:
+int main() { return 0; }

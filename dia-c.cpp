@@ -1,3 +1,4 @@
+#pragma clang diagnostic ignored "-Wmicrosoft-include"
 #include "headers/TokenTools.h"
 #include "headers/Lexer.h"
 #include "headers/Parser.h"
@@ -13,7 +14,7 @@ int main(int argc, char **argv)
 		cout << tokens.at(i).toString() << endl;
 	}
 
-	AST::ExprAST head = Parser(tokens).parsePrimary();
+	// AST::ExprAST head = Parser(tokens).parsePrimary();
 
 	return 0;
 }

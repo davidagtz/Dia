@@ -2,10 +2,11 @@
 
 #include "Expr.h"
 #include "TokenTools.h"
-#include "vector"
 #include "ArrayList.h"
-#include "memory"
-#include "../llvm/ADT/STLExtras.h"
+#include "llvm/ADT/STLExtras.h"
+#include <vector>
+#include <memory>
+#include <map>
 
 #define ull unsigned long long
 
@@ -17,7 +18,7 @@ class Parser
 	std::map<std::string, int> binop;
 
   public:
-	Parser(std::vector<token> toks) : tokens(toks), opprec(3)
+	Parser(std::vector<token> toks) : tokens(toks), binop()
 	{
 		binop["("] = 40;
 		binop["*"] = 30;
@@ -63,7 +64,7 @@ class Parser
 	std::unique_ptr<AST::BaseAST> parseNumber()
 	{
 		advance();
-		return std::move(llvm::make_unique<AST::NumberAST>(tokens.at(pos - 1)));
+		return std::move(llvm::make_unique<AST::NumberAST>(std::stoi(tokens.at(pos - 1).val())));
 	};
 
 	std::unique_ptr<AST::BaseAST> parseParenExpr()
@@ -72,21 +73,21 @@ class Parser
 		auto expr = parseExpr();
 		if (!expr)
 			return nullptr;
-		if (tok() != ")")
-			return LogError("expected ')'");
+		if (!tok().valis(")"))
+			return LogError<AST::BaseAST>("expected ')'");
 		advance();
 		return expr;
 	};
 
 	std::unique_ptr<AST::BaseAST> parseIden()
 	{
-		std::string idname = tok();
+		std::string idname = tok().val();
 		advance();
-		if (tok() != "(")
+		if (!tok().valis("("))
 			return llvm::make_unique<AST::VariableAST>(idname);
 		advance();
-		std::vector<std::unique_ptr<BaseAST>> args;
-		if (tok() != ")")
+		std::vector<std::unique_ptr<AST::BaseAST>> args;
+		if (!tok().valis(")"))
 			while (1)
 			{
 				auto Arg = parseExpr();
@@ -94,10 +95,10 @@ class Parser
 					args.push_back(Arg);
 				else
 					return nullptr;
-				if (tok() == ")")
+				if (tok().valis(")"))
 					break;
-				if (tok() != ",")
-					return LogError("Expected ',' or ')'");
+				if (!tok().valis(","))
+					return LogError<AST::BaseAST>("Expected ',' or ')'");
 				advance();
 			}
 		return llvm::make_unique<AST::CallAST>(idname, std::move(args));
@@ -105,7 +106,7 @@ class Parser
 
 	std::unique_ptr<AST::BaseAST> parsePrimary()
 	{
-		switch (tok().id())
+		switch (tok().getid())
 		{
 		case iden:
 			return parseIden();
@@ -114,7 +115,7 @@ class Parser
 		case num:
 			return parseNumber();
 		default:
-			return LogError("Unexpected Token");
+			return LogError<AST::BaseAST>("Unexpected Token");
 		}
 	};
 
@@ -126,16 +127,16 @@ class Parser
 		return parseRightBinop(0, std::move(left));
 	};
 
-	std::unique_ptr<AST::BaseAST> parseRightBinop(int oprec, unique_ptr<AST::BaseAST> left)
+	std::unique_ptr<AST::BaseAST> parseRightBinop(int oprec, std::unique_ptr<AST::BaseAST> left)
 	{
 		while (1)
 		{
 			int prec = getPrec();
 			if (getPrec() < oprec)
 			{
-				return LHS;
+				return left;
 			}
-			std::string comp = tok();
+			std::string comp = tok().val();
 			advance();
 			auto right = parsePrimary();
 			if (!right)
@@ -149,55 +150,55 @@ class Parser
 					return nullptr;
 				}
 			}
-			left = llvm::make_unique<BinaryExprAST>(comp, std::left(left), std::move(right));
+			left = llvm::make_unique<AST::BinaryAST>(comp, std::move(left), std::move(right));
 		};
 	};
 
-	std::unique_ptr<PrototypeAST> parsePrototype()
+	std::unique_ptr<AST::PrototypeAST> parsePrototype()
 	{
-		if (!tok.idis(iden))
-			return LogError("Expected function in prototype");
+		if (!tok().idis(iden))
+			return LogError<AST::PrototypeAST>("Expected function in prototype");
 		std::string fname = tok().val();
 		advance();
-		if (tok.val() != "(")
-			return LogError("Expected '(' in header");
+		if (!tok().valis("("))
+			return LogError<AST::PrototypeAST>("Expected '(' in header");
 		std::vector<std::string> args;
 		while (tok().idis(iden))
 		{
-			args.push_back(tok.val());
+			args.push_back(tok().val());
 			advance();
 		}
-		if (tok().val() != ")")
-			return LogError("Expected ')' in header");
+		if (!tok().valis(")"))
+			return LogError<AST::PrototypeAST>("Expected ')' in header");
 		advance();
-		return llvm::make_unique<PrototypeAST>(fname, std::move(args));
+		return llvm::make_unique<AST::PrototypeAST>(fname, std::move(args));
 	};
 
-	std::unique_ptr<FunctionAST> parseDef()
+	std::unique_ptr<AST::FunctionAST> parseDef()
 	{
-		if (!tok.valis("func"))
+		if (!tok().valis("func"))
 			return nullptr;
 		auto proto = parsePrototype();
 		if (!proto)
 			return nullptr;
-		auto expr = parseExpression();
+		auto expr = parseExpr();
 		if (!expr)
 			return nullptr;
-		return llvm::make_unique<FunctionAST>(std::move(proto), std::move(expr));
+		return llvm::make_unique<AST::FunctionAST>(std::move(proto), std::move(expr));
 	};
 
-	std::unique_ptr<FunctionAST> parseTopLevel()
+	std::unique_ptr<AST::FunctionAST> parseTopLevel()
 	{
-		auto expr = parseExpression();
+		auto expr = parseExpr();
 		if (!expr)
 			return nullptr;
-		auto proto = llvm::make_unique<PrototypeAST>("", std::vector<std::string>());
-		return llvm::make_unique(std::move(proto), std::move(expr));
+		auto proto = llvm::make_unique<AST::PrototypeAST>("", std::vector<std::string>());
+		return llvm::make_unique<AST::FunctionAST>(std::move(proto), std::move(expr));
 	}
 
 	int getPrec()
 	{
-		if (!isascii(tok()))
+		if (!isascii(tok().val().at(0)))
 			return -1;
 		int prec = binop[tok().val()];
 		if (prec <= 0)
@@ -205,7 +206,7 @@ class Parser
 		return prec;
 	};
 
-	token tok(){return tokens.at(pos)};
+	token tok() { return tokens.at(pos); };
 	void advance() { advance(1); };
 	void advance(int i)
 	{
@@ -219,7 +220,8 @@ class Parser
 		} while (tok().idis(eol));
 	};
 
-	std::unique_ptr<AST::BaseAST> LogError(ull line, std::string msg)
+	template <class T>
+	std::unique_ptr<T> LogError(std::string msg)
 	{
 		std::cerr << "Line " << line << ": " << msg << std::endl;
 		return nullptr;

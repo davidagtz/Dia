@@ -18,6 +18,14 @@ class NumberAST : public BaseAST
 	NumberAST(long long num) : val(num){};
 };
 
+class VariableAST : public BaseAST
+{
+	std::string name;
+
+  public:
+	VariableAST(std::string n) : name(n){};
+};
+
 class BinaryAST : public BaseAST
 {
 	std::string op;

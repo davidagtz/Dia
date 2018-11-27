@@ -1,0 +1,4 @@
+C:/Users/David/Documents/School/Dia/build/CMakeFiles/package.dir
+C:/Users/David/Documents/School/Dia/build/CMakeFiles/package_source.dir
+C:/Users/David/Documents/School/Dia/build/CMakeFiles/edit_cache.dir
+C:/Users/David/Documents/School/Dia/build/CMakeFiles/rebuild_cache.dir
