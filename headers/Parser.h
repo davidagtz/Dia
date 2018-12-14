@@ -27,40 +27,6 @@ class Parser
 		binop["-"] = 20;
 	};
 
-	AST::Base parse()
-	{
-		using namespace AST;
-
-		Base program = Base();
-
-		while (pos <= tokens.size())
-		{
-			if (tok().idis(eol))
-			{
-				line++;
-			}
-			else if (tok().idis(keyword))
-			{
-				// if (tok().valueis("if"))
-				// {
-				// 	advance();
-				// 	if (!tok().valueis("("))
-				// 	{
-				// 		LogError(line, "Expected Parentheses After is Statement.");
-				// 		return Block("error");
-				// 	}
-				// 	program.addNode(If(parseBinary(), parse()));
-				// }
-				// else if(tok().valueis("from")){
-
-				// }
-			}
-			advance();
-		}
-
-		return program;
-	};
-
 	std::unique_ptr<AST::Base> parseNumber()
 	{
 		advance();

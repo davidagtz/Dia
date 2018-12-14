@@ -1,1 +1,0 @@
-cmake -Hllvm -G Ninja -Bbuild -DCMAKE_ASM_COMPILER:PATH="C:\Users\David\AppData\Local\bin\NASM" -DCMAKE_C_COMPILER:PATH="C:\Program Files\LLVM\bin\clang-cl.exe" -DCMAKE_CXX_COMPILER:PATH="C:\Program Files\LLVM\bin\clang-cl.exe" -DCMAKE_C_COMPILER_ID="Clang-cl" -DCMAKE_CXX_COMPILER_ID="Clang-cl" -DCMAKE_SYSTEM_NAME="Generic"

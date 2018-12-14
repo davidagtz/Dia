@@ -17,5 +17,7 @@ int main(int argc, char **argv)
 	Parser parse(move(tokens));
 	unique_ptr<AST::Base> head = parse.parsePrimary();
 
+	llvm::Value *code = head->codegen();
+
 	return 0;
 }
