@@ -1,37 +1,31 @@
 #pragma once
 #include <vector>
-#include "goodFiles.h"
 #include <string>
+#include "goodFiles.h"
 #include "TokenTools.h"
 
 std::vector<token> lex(int argc, char **argv)
 {
 	using namespace std;
-	using namespace tools;
-	if (argc < 3)
-	{
-		cerr << "The lexer takes in only one argument which is the file to be tokenized.";
-		cerr << "Usage: Lexer -i fileName.da";
-		return err_vector();
-	}
 
+	// Converts arguments to strings
 	string args[sizeof(argv)];
-	arrToString(argv, args, argc);
+	tools::arrToString(argv, args, argc);
 
-	string file;
+	string file = "";
 	string out = "";
-	bool showTokens = false;
+	bool showTokens = true;
 
-	for (int i = 0; i < argc; i++)
+	for (int i = 1; i < argc; i++)
 	{
+		// Input
 		if (args[i].compare("-i") == 0)
 		{
 			i++;
 
-			file = getFile(args[i]);
-
-			continue;
+			file = tools::getFile(args[i]);
 		}
+		// Output
 		else if (args[i].compare("-o") == 0)
 		{
 			i++;
@@ -39,9 +33,8 @@ std::vector<token> lex(int argc, char **argv)
 			out = args[i];
 
 			cout << "Making File " << out << endl;
-
-			continue;
 		}
+		// Tokenized?
 		else if (args[i].compare("-s") == 0)
 		{
 			i++;
@@ -52,9 +45,17 @@ std::vector<token> lex(int argc, char **argv)
 				cout << endl
 					 << file
 					 << endl;
-
-			continue;
+			if (args[i].compare("none") == 0)
+				showTokens = false;
 		}
+	}
+
+	if (file == "")
+	{
+		cerr << "The lexer requires the file to be tokenized." << endl;
+		cerr << "Usage: Lexer -i fileName.da" << endl
+			 << endl;
+		return err_vector();
 	}
 
 	vector<token> tokens = FileTokenizer(file).getTokens();

@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <memory>
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/BasicBlock.h"
@@ -9,30 +10,27 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/IR/Module.h"
 
-namespace AST
+namespace dia
 {
-
-using namespace llvm;
 
 class Base
 {
   public:
 	virtual ~Base() = default;
-	virtual Value *codegen() = 0;
+	virtual llvm::Value *codegen() = 0;
 };
 
 class Number : public Base
 {
-	long long val;
+	double val;
 
   public:
-	Number(long long num) : val(num){};
-	Value *codegen(){};
+	Number(double num) : val(num){};
+	llvm::Value *codegen() override;
 };
 
 class Variable : public Base
@@ -41,7 +39,7 @@ class Variable : public Base
 
   public:
 	Variable(std::string n) : name(n){};
-	Value *codegen(){};
+	llvm::Value *codegen() override;
 };
 
 class Binary : public Base
@@ -53,7 +51,7 @@ class Binary : public Base
   public:
 	Binary(std::string oper, std::unique_ptr<Base> left, std::unique_ptr<Base> right)
 		: op(oper), LHS(std::move(left)), RHS(std::move(right)){};
-	Value *codegen(){};
+	llvm::Value *codegen() override;
 };
 
 class Call : public Base
@@ -64,7 +62,7 @@ class Call : public Base
   public:
 	Call(std::string callee, std::vector<std::unique_ptr<Base>> arguments)
 		: callee(callee), args(std::move(arguments)){};
-	Value *codegen(){};
+	llvm::Value *codegen() override;
 };
 
 class Prototype : public Base
@@ -75,7 +73,7 @@ class Prototype : public Base
   public:
 	Prototype(std::string name, std::vector<std::string> args)
 		: name(name), args(std::move(args)){};
-	Value *codegen(){};
+	llvm::Value *codegen() override;
 };
 
 class Function : public Base
@@ -86,6 +84,6 @@ class Function : public Base
   public:
 	Function(std::unique_ptr<Prototype> proto, std::unique_ptr<Base> body)
 		: prototype(std::move(proto)), body(std::move(body)){};
-	Value *codegen(){};
+	llvm::Value *codegen() override;
 };
-} // namespace AST
+} // namespace dia

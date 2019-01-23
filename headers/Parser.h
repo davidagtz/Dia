@@ -1,12 +1,22 @@
 #pragma once
 
-#include "Expr.h"
-#include "TokenTools.h"
-#include "ArrayList.h"
-#include "llvm/ADT/STLExtras.h"
 #include <vector>
 #include <memory>
 #include <map>
+#include <ctype.h>
+#include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/Verifier.h"
+#include "TokenTools.h"
+#include "Expr.h"
 
 #define ull unsigned long long
 
@@ -27,32 +37,32 @@ class Parser
 		binop["-"] = 20;
 	};
 
-	std::unique_ptr<AST::Base> parseNumber()
+	std::unique_ptr<dia::Base> parseNumber()
 	{
 		advance();
-		return std::move(llvm::make_unique<AST::Number>(std::stoi(tokens.at(pos - 1).val())));
+		return std::move(std::make_unique<dia::Number>(std::stoi(tokens.at(pos - 1).val())));
 	};
 
-	std::unique_ptr<AST::Base> parseParenExpr()
+	std::unique_ptr<dia::Base> parseParenExpr()
 	{
 		advance();
 		auto expr = parseExpr();
 		if (!expr)
 			return nullptr;
 		if (!tok().valis(")"))
-			return LogError<AST::Base>("expected ')'");
+			return LogError<dia::Base>("expected ')'");
 		advance();
 		return expr;
 	};
 
-	std::unique_ptr<AST::Base> parseIden()
+	std::unique_ptr<dia::Base> parseIden()
 	{
 		std::string idname = tok().val();
 		advance();
 		if (!tok().valis("("))
-			return llvm::make_unique<AST::Variable>(idname);
+			return std::make_unique<dia::Variable>(idname);
 		advance();
-		std::vector<std::unique_ptr<AST::Base>> args;
+		std::vector<std::unique_ptr<dia::Base>> args;
 		if (!tok().valis(")"))
 			while (1)
 			{
@@ -64,13 +74,13 @@ class Parser
 				if (tok().valis(")"))
 					break;
 				if (!tok().valis(","))
-					return LogError<AST::Base>("Expected ',' or ')'");
+					return LogError<dia::Base>("Expected ',' or ')'");
 				advance();
 			}
-		return llvm::make_unique<AST::Call>(idname, std::move(args));
+		return std::make_unique<dia::Call>(idname, std::move(args));
 	};
 
-	std::unique_ptr<AST::Base> parsePrimary()
+	std::unique_ptr<dia::Base> parsePrimary()
 	{
 		switch (tok().getid())
 		{
@@ -81,11 +91,11 @@ class Parser
 		case num:
 			return parseNumber();
 		default:
-			return LogError<AST::Base>("Unexpected Token");
+			return LogError<dia::Base>("Unexpected Token");
 		}
 	};
 
-	std::unique_ptr<AST::Base> parseExpr()
+	std::unique_ptr<dia::Base> parseExpr()
 	{
 		auto left = parsePrimary();
 		if (!left)
@@ -93,7 +103,7 @@ class Parser
 		return parseRightBinop(0, std::move(left));
 	};
 
-	std::unique_ptr<AST::Base> parseRightBinop(int oprec, std::unique_ptr<AST::Base> left)
+	std::unique_ptr<dia::Base> parseRightBinop(int oprec, std::unique_ptr<dia::Base> left)
 	{
 		while (1)
 		{
@@ -116,18 +126,18 @@ class Parser
 					return nullptr;
 				}
 			}
-			left = llvm::make_unique<AST::Binary>(comp, std::move(left), std::move(right));
+			left = std::make_unique<dia::Binary>(comp, std::move(left), std::move(right));
 		};
 	};
 
-	std::unique_ptr<AST::Prototype> parsePrototype()
+	std::unique_ptr<dia::Prototype> parsePrototype()
 	{
 		if (!tok().idis(iden))
-			return LogError<AST::Prototype>("Expected function in prototype");
+			return LogError<dia::Prototype>("Expected function in prototype");
 		std::string fname = tok().val();
 		advance();
 		if (!tok().valis("("))
-			return LogError<AST::Prototype>("Expected '(' in header");
+			return LogError<dia::Prototype>("Expected '(' in header");
 		std::vector<std::string> args;
 		while (tok().idis(iden))
 		{
@@ -135,12 +145,12 @@ class Parser
 			advance();
 		}
 		if (!tok().valis(")"))
-			return LogError<AST::Prototype>("Expected ')' in header");
+			return LogError<dia::Prototype>("Expected ')' in header");
 		advance();
-		return llvm::make_unique<AST::Prototype>(fname, std::move(args));
+		return std::make_unique<dia::Prototype>(fname, std::move(args));
 	};
 
-	std::unique_ptr<AST::Function> parseDef()
+	std::unique_ptr<dia::Function> parseDef()
 	{
 		if (!tok().valis("func"))
 			return nullptr;
@@ -150,21 +160,21 @@ class Parser
 		auto expr = parseExpr();
 		if (!expr)
 			return nullptr;
-		return llvm::make_unique<AST::Function>(std::move(proto), std::move(expr));
+		return std::make_unique<dia::Function>(std::move(proto), std::move(expr));
 	};
 
-	std::unique_ptr<AST::Function> parseTopLevel()
+	std::unique_ptr<dia::Function> parseTopLevel()
 	{
 		auto expr = parseExpr();
 		if (!expr)
 			return nullptr;
-		auto proto = llvm::make_unique<AST::Prototype>("", std::vector<std::string>());
-		return llvm::make_unique<AST::Function>(std::move(proto), std::move(expr));
+		auto proto = std::make_unique<dia::Prototype>("", std::vector<std::string>());
+		return std::make_unique<dia::Function>(std::move(proto), std::move(expr));
 	}
 
 	int getPrec()
 	{
-		if (!isascii(tok().val().at(0)))
+		if (!isalpha(tok().val().at(0)))
 			return -1;
 		int prec = binop[tok().val()];
 		if (prec <= 0)

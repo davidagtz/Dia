@@ -1,20 +1,11 @@
-#ifndef iostream
 #include <iostream>
-#endif
-
-#ifndef string
 #include <string>
-#endif
-
-#ifndef fstream
 #include <fstream>
-#endif
-
-#ifndef vector
 #include <vector>
-#endif
+
 namespace tools
 {
+
 std::string getFile(std::string &fileName)
 {
 	using namespace std;
@@ -45,12 +36,10 @@ std::string getFile(std::string &fileName)
 	}
 }
 
-void arrToString(char **oarg, std::string *args, int &argco)
+void arrToString(char **oarg, std::string *args, int &argc)
 {
-	using namespace std;
-	for (int i = 0; i < argco; i++)
-	{
-		args[i] = string(oarg[i]);
-	}
+	for (int i = 0; i < argc; i++)
+		args[i] = std::string(oarg[i]);
 }
+
 }; // namespace tools
