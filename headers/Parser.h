@@ -1,23 +1,4 @@
 #pragma once
-
-#include <vector>
-#include <memory>
-#include <map>
-#include <ctype.h>
-#include "llvm/ADT/APFloat.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/Type.h"
-#include "llvm/IR/Verifier.h"
-#include "TokenTools.h"
-#include "Expr.h"
-
 #define ull unsigned long long
 
 class Parser
@@ -28,7 +9,7 @@ class Parser
 	std::map<std::string, int> binop;
 
   public:
-	Parser(std::vector<token> toks) : tokens(toks), binop()
+	Parser(std::vector<token> toks) : tokens(toks), binop(), pos(0), line(0)
 	{
 		binop["("] = 40;
 		binop["*"] = 30;
@@ -82,6 +63,10 @@ class Parser
 
 	std::unique_ptr<dia::Base> parsePrimary()
 	{
+		// std::cout << "Postion: " << pos << std::endl;
+		// std::cout << "Token ID: " << tok().getid() << std::endl;
+		// std::cout << "Token Value: " << tok().val() << std::endl
+		// 		  << std::endl;
 		switch (tok().getid())
 		{
 		case iden:
@@ -112,7 +97,7 @@ class Parser
 			{
 				return left;
 			}
-			std::string comp = tok().val();
+			char comp = tok().val()[0];
 			advance();
 			auto right = parsePrimary();
 			if (!right)
@@ -138,6 +123,7 @@ class Parser
 		advance();
 		if (!tok().valis("("))
 			return LogError<dia::Prototype>("Expected '(' in header");
+		advance();
 		std::vector<std::string> args;
 		while (tok().idis(iden))
 		{
@@ -154,6 +140,7 @@ class Parser
 	{
 		if (!tok().valis("func"))
 			return nullptr;
+		advance();
 		auto proto = parsePrototype();
 		if (!proto)
 			return nullptr;
@@ -174,8 +161,8 @@ class Parser
 
 	int getPrec()
 	{
-		if (!isalpha(tok().val().at(0)))
-			return -1;
+		// if (!isalpha(tok().val().at(0)))
+		// 	return -1;
 		int prec = binop[tok().val()];
 		if (prec <= 0)
 			return -1;
@@ -186,14 +173,18 @@ class Parser
 	void advance() { advance(1); };
 	void advance(int i)
 	{
+		int count = 0;
 		do
 		{
-			pos += i;
+			pos += 1;
+			count += 1;
 			if (tok().idis(eol))
 			{
 				line++;
 			}
-		} while (tok().idis(eol));
+		} while (tok().idis(eol) && count < i);
+		if (pos >= tokens.size())
+			std::cout << "Reached end of file." << std::endl;
 	};
 
 	template <class T>
@@ -202,4 +193,8 @@ class Parser
 		std::cerr << "Line " << line << ": " << msg << std::endl;
 		return nullptr;
 	};
+	void handle_top_level();
+	void handle_def();
 };
+
+#include "handlers.h"

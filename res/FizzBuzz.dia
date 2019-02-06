@@ -1,10 +1,10 @@
-int num = ask("To what number");
+let num = get("To what number");
 
 from (12.34) to (num) as i {
 	decide(i);
 }
 
-func null decide(int i) {
+func null decide(i) {
 	if (i % 3) {
 		print("Fizz");
 	}

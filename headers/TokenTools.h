@@ -1,10 +1,5 @@
 #pragma once
 
-#include <string>
-#include <vector>
-#include <ctype.h>
-#include <iostream>
-
 #define ull unsigned long long
 
 enum tok_id
@@ -17,6 +12,7 @@ enum tok_id
 	op,
 	paren,
 	iden,
+	def,
 	eol,
 	keyword,
 
@@ -30,19 +26,23 @@ std::vector<std::string> keywords({"if",
 								   "int",
 								   "elif",
 								   "string",
-								   "func",
 								   "bool",
 								   "from",
 								   "to",
 								   "as"});
 
-// string ops[] = {};
 bool isparen(char a) { return a == '(' || a == ')'; }
 bool isnewline(char a) { return a == 0x0A; }
 bool isquote(char a) { return a == 0x22; }
-// bool isop(char a) { return }
 
 bool equals(std::string s, std::string e) { return s.compare(e) == 0; }
+bool contains(std::vector<std::string> list, std::string str)
+{
+	for (int i = 0; i < list.size(); i++)
+		if (equals(list.at(i), str))
+			return true;
+	return false;
+}
 
 class token
 {
@@ -78,7 +78,7 @@ class FileTokenizer
 	ull line;
 
   public:
-	FileTokenizer(std::string thefile) : file(thefile), pos(0), line(1) {}
+	FileTokenizer(std::string thefile) : tokens(), file(thefile), pos(0), line(1) {}
 
 	void nextToken()
 	{
@@ -91,7 +91,7 @@ class FileTokenizer
 
 		if (isalpha(curChar))
 		{
-			while (isalpha(file.at(pos + 1)) || isdigit(file.at(pos + 1)))
+			while (pos + 1 < file.size() && (isalpha(file.at(pos + 1)) || isdigit(file.at(pos + 1))))
 			{
 				pos++;
 				value += file.at(pos);
@@ -99,6 +99,10 @@ class FileTokenizer
 
 			if (equals(value, "true") || equals(value, "false"))
 				id = bln;
+			else if (equals(value, "func"))
+				id = def;
+			else if (contains(keywords, value))
+				id = keyword;
 			else
 				id = iden;
 		}
@@ -106,7 +110,7 @@ class FileTokenizer
 		{
 			bool hasdec = false;
 
-			while (pos < file.size() && (((file.at(pos + 1) == '.') && !hasdec) || isdigit(file.at(pos + 1))))
+			while (pos + 1 < file.size() && (((file.at(pos + 1) == '.') && !hasdec) || isdigit(file.at(pos + 1))))
 			{
 				pos++;
 
@@ -168,6 +172,8 @@ class FileTokenizer
 		else if (isspace(curChar) && !isnewline(curChar))
 		{
 			pos++;
+			if (pos >= file.size())
+				return;
 			nextToken();
 			return;
 		}
@@ -198,4 +204,21 @@ class FileTokenizer
 		}
 		return tokens;
 	}
+};
+
+std::vector<std::string> split(std::string arg, std::string delim)
+{
+	std::vector<std::string> splitted({});
+	int i = 0;
+	do
+	{
+		while (equals(arg.substr(i, i + delim.size()), delim))
+		{
+			arg = arg.substr(1);
+		}
+		i = arg.find(delim);
+		splitted.push_back(arg.substr(0, i));
+		arg = arg.substr(i + delim.size());
+	} while (i != -1);
+	return splitted;
 };
