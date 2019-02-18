@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <string>
 #include <iostream>
+// #include "../include/KaleidoscopeJIT.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/BasicBlock.h"
@@ -20,46 +21,18 @@
 #include "headers/Lexer.h"
 #include "headers/Parser.h"
 #include "headers/codegen.h"
+void shell();
 
 using namespace std;
 
 int main(int argc, char **argv)
 {
 	TheModule = std::make_unique<llvm::Module>("Dia JIT", TheContext);
-	while (1)
+
+	if (argc == 1)
 	{
-		// Input
-		cout << "> ";
-		string in = "";
-		char last = 'a';
-		while (int(last) != 10)
-		{
-			last = getchar();
-			if (last != 10)
-				in += last;
-		}
-
-		vector<token> t = FileTokenizer(in).getTokens();
-
-		Parser p(t);
-
-		for (token to : t)
-		{
-			cout << to.val() + " " << to.getid() << endl;
-		}
-
-		switch (t.at(0).getid())
-		{
-		case eol:
-			return 0;
-		case def:
-			p.handle_def();
-			break;
-		default:
-			p.handle_top_level();
-			break;
-		}
-
+		shell();
+		TheModule->print(llvm::errs(), nullptr);
 		return 0;
 	}
 
@@ -76,3 +49,42 @@ int main(int argc, char **argv)
 
 	return 0;
 }
+
+void shell()
+{
+	while (1)
+	{
+		// Input
+		int pos_back = -1;
+		cout << "> ";
+		string in = "";
+		char last = 'a';
+		while (int(last) != 10)
+		{
+			last = getchar();
+			if (last != 10)
+				in += last;
+		}
+
+		vector<token> t = FileTokenizer(in).getTokens();
+		if (t.size() == 0)
+			return;
+
+		Parser p(t);
+
+		// for (token to : t)
+		// {
+		// 	cout << to.val() + " " << to.getid() << endl;
+		// }
+
+		switch (t.at(0).getid())
+		{
+		case def:
+			p.handle_def();
+			break;
+		default:
+			p.handle_top_level();
+			break;
+		}
+	}
+};

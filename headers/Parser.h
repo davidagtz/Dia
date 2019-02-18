@@ -1,4 +1,11 @@
 #pragma once
+#include <vector>
+#include <memory>
+#include <map>
+#include "TokenTools.h"
+#include "Expr.h"
+#include "ReturnTypes.h"
+
 #define ull unsigned long long
 
 class Parser
@@ -20,8 +27,9 @@ class Parser
 
 	std::unique_ptr<dia::Base> parseNumber()
 	{
+		auto num = std::move(std::make_unique<dia::Number>(std::stoi(tokens.at(pos).val())));
 		advance();
-		return std::move(std::make_unique<dia::Number>(std::stoi(tokens.at(pos - 1).val())));
+		return num;
 	};
 
 	std::unique_ptr<dia::Base> parseParenExpr()
@@ -53,7 +61,10 @@ class Parser
 				else
 					return nullptr;
 				if (tok().valis(")"))
+				{
+					advance();
 					break;
+				}
 				if (!tok().valis(","))
 					return LogError<dia::Base>("Expected ',' or ')'");
 				advance();
@@ -117,8 +128,15 @@ class Parser
 
 	std::unique_ptr<dia::Prototype> parsePrototype()
 	{
+		Return ret_type = Return::decimal;
 		if (!tok().idis(iden))
-			return LogError<dia::Prototype>("Expected function in prototype");
+		{
+			if (tok().valis("int"))
+				ret_type = Return::integer;
+			else
+				return LogError<dia::Prototype>("Expected function in prototype");
+			advance();
+		}
 		std::string fname = tok().val();
 		advance();
 		if (!tok().valis("("))
@@ -129,11 +147,14 @@ class Parser
 		{
 			args.push_back(tok().val());
 			advance();
+			if (!tok().valis(","))
+				break;
+			advance();
 		}
 		if (!tok().valis(")"))
 			return LogError<dia::Prototype>("Expected ')' in header");
 		advance();
-		return std::make_unique<dia::Prototype>(fname, std::move(args));
+		return std::make_unique<dia::Prototype>(fname, std::move(args), ret_type);
 	};
 
 	std::unique_ptr<dia::Function> parseDef()
@@ -155,7 +176,7 @@ class Parser
 		auto expr = parseExpr();
 		if (!expr)
 			return nullptr;
-		auto proto = std::make_unique<dia::Prototype>("", std::vector<std::string>());
+		auto proto = std::make_unique<dia::Prototype>("", std::vector<std::string>(), Return::decimal);
 		return std::make_unique<dia::Function>(std::move(proto), std::move(expr));
 	}
 
@@ -173,18 +194,10 @@ class Parser
 	void advance() { advance(1); };
 	void advance(int i)
 	{
-		int count = 0;
-		do
-		{
-			pos += 1;
-			count += 1;
-			if (tok().idis(eol))
-			{
-				line++;
-			}
-		} while (tok().idis(eol) && count < i);
-		if (pos >= tokens.size())
-			std::cout << "Reached end of file." << std::endl;
+		if (pos + i >= tokens.size())
+			pos = tokens.size() - 1;
+		else
+			pos += i;
 	};
 
 	template <class T>

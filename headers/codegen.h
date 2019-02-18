@@ -1,11 +1,13 @@
 #include <memory>
 #include <string>
 #include "Expr.h"
+#include "ReturnTypes.h"
 
 static llvm::LLVMContext TheContext;
 static llvm::IRBuilder<> Builder(TheContext);
 static std::map<std::string, llvm::Value *> NamedValues;
 static std::unique_ptr<llvm::Module> TheModule;
+// static std::unique_ptr<KaleidoscopeJIT> TheJIT;
 
 llvm::Value *LogError(std::string msg)
 {
@@ -41,6 +43,8 @@ llvm::Value *dia::Binary::codegen()
 		return Builder.CreateFSub(L, R, "subtmp");
 	case '*':
 		return Builder.CreateFMul(L, R, "multmp");
+	case '/':
+		return Builder.CreateFDiv(L, R, "fdivtmp");
 	case '<':
 		L = Builder.CreateFCmpULT(L, R, "cmptmp");
 		return Builder.CreateUIToFP(L, llvm::Type::getDoubleTy(TheContext),
@@ -74,7 +78,11 @@ llvm::Value *dia::Call::codegen()
 llvm::Function *dia::Prototype::codegen()
 {
 	std::vector<llvm::Type *> Doubles(args.size(), llvm::Type::getDoubleTy(TheContext));
-	llvm::FunctionType *t = llvm::FunctionType::get(llvm::Type::getDoubleTy(TheContext), Doubles, false);
+	llvm::FunctionType *t;
+	if (ret_type == Return::integer)
+		t = llvm::FunctionType::get(llvm::Type::getInt32Ty(TheContext), Doubles, false);
+	else if (ret_type == Return::decimal)
+		t = llvm::FunctionType::get(llvm::Type::getDoubleTy(TheContext), Doubles, false);
 	llvm::Function *f = llvm::Function::Create(t, llvm::Function::ExternalLinkage, name, TheModule.get());
 
 	unsigned i = 0;
