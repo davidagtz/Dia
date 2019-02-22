@@ -48,6 +48,7 @@
 		"typeinfo": "cpp",
 		"utility": "cpp",
 		"algorithm": "cpp",
-		"cstdarg": "cpp"
+		"cstdarg": "cpp",
+		"deque": "cpp"
 	}
 }

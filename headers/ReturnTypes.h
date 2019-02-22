@@ -3,5 +3,6 @@
 enum class Return
 {
     integer,
-    decimal
+    decimal,
+    not_a_type
 };

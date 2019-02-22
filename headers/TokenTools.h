@@ -15,6 +15,8 @@ enum tok_id
 	def,
 	eol,
 	keyword,
+	ext,
+	type,
 
 	//error handling
 	errHandle
@@ -23,13 +25,14 @@ enum tok_id
 
 std::vector<std::string> keywords({"if",
 								   "else",
-								   "int",
 								   "elif",
 								   "string",
 								   "bool",
 								   "from",
 								   "to",
 								   "as"});
+std::vector<std::string> types({"int",
+								"fp"});
 
 bool isparen(char a) { return a == '(' || a == ')'; }
 bool isnewline(char a) { return a == 0x0A; }
@@ -99,10 +102,14 @@ class FileTokenizer
 
 			if (equals(value, "true") || equals(value, "false"))
 				id = bln;
-			else if (equals(value, "func"))
+			else if (equals(value, "fn"))
 				id = def;
+			else if (equals(value, "import"))
+				id = ext;
 			else if (contains(keywords, value))
 				id = keyword;
+			else if (contains(types, value))
+				id = type;
 			else
 				id = iden;
 		}

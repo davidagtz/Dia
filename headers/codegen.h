@@ -1,3 +1,5 @@
+#pragma once
+
 #include <memory>
 #include <string>
 #include "Expr.h"
@@ -10,6 +12,12 @@ static std::unique_ptr<llvm::Module> TheModule;
 // static std::unique_ptr<KaleidoscopeJIT> TheJIT;
 
 llvm::Value *LogError(std::string msg)
+{
+	std::cout << msg << std::endl;
+	return nullptr;
+}
+
+llvm::Function *LogErrorP(std::string msg)
 {
 	std::cout << msg << std::endl;
 	return nullptr;
@@ -77,7 +85,16 @@ llvm::Value *dia::Call::codegen()
 
 llvm::Function *dia::Prototype::codegen()
 {
-	std::vector<llvm::Type *> Doubles(args.size(), llvm::Type::getDoubleTy(TheContext));
+	std::vector<llvm::Type *> Doubles({});
+	for (int i = 0; i < args.size(); i++)
+	{
+		if (args.at(i).second == Return::decimal)
+			Doubles.push_back(llvm::Type::getDoubleTy(TheContext));
+		else if (args.at(i).second == Return::integer)
+			Doubles.push_back(llvm::Type::getInt32Ty(TheContext));
+		else
+			return LogErrorP("Not a valid type for the argument in the prototype");
+	}
 	llvm::FunctionType *t;
 	if (ret_type == Return::integer)
 		t = llvm::FunctionType::get(llvm::Type::getInt32Ty(TheContext), Doubles, false);
@@ -87,7 +104,7 @@ llvm::Function *dia::Prototype::codegen()
 
 	unsigned i = 0;
 	for (auto &arg : f->args())
-		arg.setName(args[i++]);
+		arg.setName(args[i++].first);
 
 	return f;
 };

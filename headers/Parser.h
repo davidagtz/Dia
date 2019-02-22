@@ -1,4 +1,5 @@
 #pragma once
+
 #include <vector>
 #include <memory>
 #include <map>
@@ -11,11 +12,11 @@
 class Parser
 {
 	std::vector<token> tokens;
-	ull pos;
 	ull line;
 	std::map<std::string, int> binop;
 
   public:
+	ull pos;
 	Parser(std::vector<token> toks) : tokens(toks), binop(), pos(0), line(0)
 	{
 		binop["("] = 40;
@@ -126,40 +127,72 @@ class Parser
 		};
 	};
 
-	std::unique_ptr<dia::Prototype> parsePrototype()
+	std::unique_ptr<dia::Prototype> parsePrototype(bool isExtern = false)
 	{
+		// Get the Return Type
 		Return ret_type = Return::decimal;
 		if (!tok().idis(iden))
 		{
-			if (tok().valis("int"))
-				ret_type = Return::integer;
-			else
+			ret_type = getReturnType(tok().val());
+			if (ret_type == Return::not_a_type)
 				return LogError<dia::Prototype>("Expected function in prototype");
 			advance();
 		}
+
+		// Get the name
 		std::string fname = tok().val();
 		advance();
+
+		// Get the arguments
 		if (!tok().valis("("))
 			return LogError<dia::Prototype>("Expected '(' in header");
 		advance();
-		std::vector<std::string> args;
-		while (tok().idis(iden))
+		std::vector<std::pair<std::string, Return>> args;
+		// used for externs if there is no name
+		char id = 'A';
+		while (tok().idis(iden) || tok().idis(type))
 		{
-			args.push_back(tok().val());
+			std::pair<std::string, Return> arg("", Return::not_a_type);
+			Return t = getReturnType(tok().val());
+			if (t == Return::not_a_type)
+			{
+				if (isExtern)
+					return LogError<dia::Prototype>("Expected type declaration in extern header.");
+				t = Return::decimal;
+			}
+			else
+				advance();
+			arg.second = t;
+
+			if (tok().idis(iden))
+				arg.first = tok().val();
+			else
+			{
+				if (isExtern && (tok().valis(",") || tok().valis(")")))
+				{
+					arg.first = "" + id;
+					id++;
+					args.push_back(arg);
+					goto end_define;
+				}
+				return LogError<dia::Prototype>("Not a valid identifier in the arguments");
+			}
+			args.push_back(arg);
 			advance();
+		end_define:
 			if (!tok().valis(","))
 				break;
 			advance();
 		}
 		if (!tok().valis(")"))
-			return LogError<dia::Prototype>("Expected ')' in header");
+			return LogError<dia::Prototype>("Expected ')' in header. Saw " + tok().val());
 		advance();
 		return std::make_unique<dia::Prototype>(fname, std::move(args), ret_type);
 	};
 
 	std::unique_ptr<dia::Function> parseDef()
 	{
-		if (!tok().valis("func"))
+		if (!tok().valis("fn"))
 			return nullptr;
 		advance();
 		auto proto = parsePrototype();
@@ -176,8 +209,17 @@ class Parser
 		auto expr = parseExpr();
 		if (!expr)
 			return nullptr;
-		auto proto = std::make_unique<dia::Prototype>("", std::vector<std::string>(), Return::decimal);
+		auto proto = std::make_unique<dia::Prototype>("", std::vector<std::pair<std::string, Return>>(), Return::decimal);
 		return std::make_unique<dia::Function>(std::move(proto), std::move(expr));
+	}
+
+	Return getReturnType(std::string ret)
+	{
+		if (equals(ret, "int"))
+			return Return::integer;
+		else if (equals(ret, "fp"))
+			return Return::decimal;
+		return Return::not_a_type;
 	}
 
 	int getPrec()
@@ -206,8 +248,9 @@ class Parser
 		std::cerr << "Line " << line << ": " << msg << std::endl;
 		return nullptr;
 	};
-	void handle_top_level();
+	void handle_top_level(llvm::Function *f, llvm::BasicBlock *BB);
 	void handle_def();
+	void handle_extern();
 };
 
 #include "handlers.h"

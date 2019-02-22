@@ -4,7 +4,6 @@
 #include <ctype.h>
 #include <string>
 #include <iostream>
-// #include "../include/KaleidoscopeJIT.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/BasicBlock.h"
@@ -22,6 +21,7 @@
 #include "headers/Parser.h"
 #include "headers/codegen.h"
 void shell();
+llvm::Function *getMainFunction();
 
 using namespace std;
 
@@ -36,16 +36,40 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	// vector<token> tokens = lex(argc, argv);
+	vector<token> tokens = lex(argc, argv);
 
-	// for (int i = 0; i < tokens.size(); i++)
-	// 	if (tokens.at(i).idis(errHandle))
-	// 		return 1;
+	for (int i = 0; i < tokens.size(); i++)
+		if (tokens.at(i).idis(errHandle))
+			return 1;
 
-	// Parser parse(move(tokens));
-	// unique_ptr<dia::Base> head = parse.parsePrimary();
+	Parser parse(tokens);
 
-	// llvm::Value *code = head->codegen();
+	llvm::Function *fmain = getMainFunction();
+	llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", fmain);
+
+	while (parse.pos < tokens.size() - 1)
+	{
+		switch (tokens.at(parse.pos).getid())
+		{
+		case def:
+			parse.handle_def();
+			break;
+		case ext:
+			parse.handle_extern();
+			break;
+		case eol:
+			parse.advance();
+			break;
+		default:
+			parse.handle_top_level(fmain, BB);
+			break;
+		}
+	}
+
+	Builder.CreateRet(llvm::ConstantInt::get(TheContext, llvm::APInt(32, 0)));
+	llvm::verifyFunction(*fmain);
+
+	TheModule->print(llvm::errs(), nullptr);
 
 	return 0;
 }
@@ -88,3 +112,23 @@ void shell()
 		}
 	}
 };
+
+llvm::Function *getMainFunction()
+{
+	vector<llvm::Type *> argstypes({});
+	llvm::FunctionType *t = llvm::FunctionType::get(llvm::Type::getInt32Ty(TheContext), argstypes, false);
+	llvm::Function *f = llvm::Function::Create(t, llvm::Function::ExternalLinkage, "main", TheModule.get());
+	// int i = 0;
+	// for (auto &arg : f->args())
+	// 	arg.setName((f->args[i++]).first);
+
+	llvm::Function *f2 = TheModule->getFunction(f->getName());
+
+	if (!f2)
+		f2 = f;
+
+	if (!f2)
+		return nullptr;
+
+	return f2;
+}

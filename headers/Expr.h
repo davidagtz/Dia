@@ -73,11 +73,11 @@ class Call : public Base
 class Prototype : public Base
 {
 	std::string name;
-	std::vector<std::string> args;
+	std::vector<std::pair<std::string, Return>> args;
 
   public:
 	Return ret_type;
-	Prototype(std::string name, std::vector<std::string> args, Return ret_type)
+	Prototype(std::string name, std::vector<std::pair<std::string, Return>> args, Return ret_type)
 		: name(name), args(std::move(args)), ret_type(ret_type){};
 	llvm::Function *codegen() override;
 	std::string getName()
