@@ -1,5 +1,5 @@
 import int putchar(int)
-fn foo(fp boo) boo * (3 + 1)
-fn int bar(int far) foo(foo(far)) * far + 2
-putchar(foo(65))
-putchar(66)
+fn mult(saran) saran * 5
+putchar(mult(13))
+putchar(mult(14))
+putchar('A')

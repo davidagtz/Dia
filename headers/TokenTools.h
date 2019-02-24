@@ -17,6 +17,7 @@ enum tok_id
 	keyword,
 	ext,
 	type,
+	chr,
 
 	//error handling
 	errHandle
@@ -37,6 +38,7 @@ std::vector<std::string> types({"int",
 bool isparen(char a) { return a == '(' || a == ')'; }
 bool isnewline(char a) { return a == 0x0A; }
 bool isquote(char a) { return a == 0x22; }
+bool issinglequote(char a) { return a == '\''; }
 
 bool equals(std::string s, std::string e) { return s.compare(e) == 0; }
 bool contains(std::vector<std::string> list, std::string str)
@@ -175,6 +177,23 @@ class FileTokenizer
 			}
 			pos++;
 			id = str;
+		}
+		else if (issinglequote(curChar))
+		{
+			pos++;
+			if (issinglequote(file.at(pos)))
+			{
+				LogError("Character declaration empty.", line);
+				return;
+			}
+			id = chr;
+			value = string(1, file.at(pos));
+			pos++;
+			if (!issinglequote(file.at(pos)))
+			{
+				LogError("Character declaration has more than one character declared.", line);
+				return;
+			}
 		}
 		else if (isspace(curChar) && !isnewline(curChar))
 		{

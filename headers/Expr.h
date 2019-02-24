@@ -20,7 +20,7 @@ namespace dia
 
 class Base
 {
-  public:
+public:
 	virtual ~Base() = default;
 	virtual llvm::Value *codegen() = 0;
 };
@@ -29,7 +29,7 @@ class Number : public Base
 {
 	double val;
 
-  public:
+public:
 	Number(double num) : val(num){};
 	llvm::Value *codegen() override;
 };
@@ -38,7 +38,7 @@ class Variable : public Base
 {
 	std::string name;
 
-  public:
+public:
 	Variable(std::string n) : name(n){};
 	llvm::Value *codegen() override;
 };
@@ -49,9 +49,9 @@ class Binary : public Base
 	std::unique_ptr<Base> LHS;
 	std::unique_ptr<Base> RHS;
 
-  public:
+public:
 	Binary(char oper, std::unique_ptr<Base> left, std::unique_ptr<Base> right)
-		: op(oper), LHS(std::move(left)), RHS(std::move(right)){};
+			: op(oper), LHS(std::move(left)), RHS(std::move(right)){};
 	llvm::Value *codegen() override;
 };
 
@@ -60,9 +60,9 @@ class Call : public Base
 	std::string callee;
 	std::vector<std::unique_ptr<Base>> args;
 
-  public:
+public:
 	Call(std::string callee, std::vector<std::unique_ptr<Base>> arguments)
-		: callee(callee), args(std::move(arguments)){};
+			: callee(callee), args(std::move(arguments)){};
 	llvm::Value *codegen() override;
 	std::string toString()
 	{
@@ -75,10 +75,10 @@ class Prototype : public Base
 	std::string name;
 	std::vector<std::pair<std::string, Return>> args;
 
-  public:
+public:
 	Return ret_type;
 	Prototype(std::string name, std::vector<std::pair<std::string, Return>> args, Return ret_type)
-		: name(name), args(std::move(args)), ret_type(ret_type){};
+			: name(name), args(std::move(args)), ret_type(ret_type){};
 	llvm::Function *codegen() override;
 	std::string getName()
 	{
@@ -91,9 +91,18 @@ class Function : public Base
 	std::unique_ptr<Prototype> prototype;
 	std::unique_ptr<Base> body;
 
-  public:
+public:
 	Function(std::unique_ptr<Prototype> proto, std::unique_ptr<Base> body)
-		: prototype(std::move(proto)), body(std::move(body)){};
+			: prototype(std::move(proto)), body(std::move(body)){};
 	llvm::Function *codegen() override;
+};
+
+class Char : public Base
+{
+	char val;
+
+public:
+	Char(char val) : val(val){};
+	llvm::Value *codegen() override;
 };
 } // namespace dia

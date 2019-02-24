@@ -87,10 +87,19 @@ class Parser
 			return parseParenExpr();
 		case num:
 			return parseNumber();
+		case chr:
+			return parseChar();
 		default:
 			return LogError<dia::Base>("Unexpected Token");
 		}
 	};
+
+	std::unique_ptr<dia::Char> parseChar()
+	{
+		auto chr = std::move(std::make_unique<dia::Char>(tokens.at(pos).val()[0]));
+		advance();
+		return chr;
+	}
 
 	std::unique_ptr<dia::Base> parseExpr()
 	{
@@ -219,6 +228,10 @@ class Parser
 			return Return::integer;
 		else if (equals(ret, "fp"))
 			return Return::decimal;
+		else if (equals(ret, "chr"))
+			return Return::chr;
+		else if (equals(ret, "void"))
+			return Return::null;
 		return Return::not_a_type;
 	}
 

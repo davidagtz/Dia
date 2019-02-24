@@ -43,6 +43,11 @@ llvm::Value *dia::Binary::codegen()
 	if (!L || !R)
 		return nullptr;
 
+	if (L->getType()->isIntegerTy())
+		L = Builder.CreateSIToFP(L, llvm::Type::getInt32Ty(TheContext), "casttmp");
+	if (R->getType()->isIntegerTy())
+		R = Builder.CreateSIToFP(R, llvm::Type::getInt32Ty(TheContext), "casttmp");
+
 	switch (op)
 	{
 	case '+':
@@ -75,7 +80,19 @@ llvm::Value *dia::Call::codegen()
 	for (unsigned i = 0; i < args.size(); i++)
 	{
 		if (auto t = args[i]->codegen())
+		{
+			llvm::Value *c_arg = func->arg_begin() + i;
+			if (c_arg->getType() != t->getType())
+			{
+				if (c_arg->getType()->isIntegerTy() && t->getType()->isDoubleTy())
+					t = Builder.CreateFPToSI(t, llvm::Type::getInt32Ty(TheContext), "casttmp");
+				else if (c_arg->getType()->isDoubleTy() && t->getType()->isIntegerTy())
+					t = Builder.CreateSIToFP(t, llvm::Type::getDoubleTy(TheContext), "casttmp");
+				else
+					LogError(std::string("Invalid Type for Parameter ") + std::to_string(i + 1) + std::string(" of call to ") + callee);
+			}
 			argsv.push_back(t);
+		}
 		else
 			return nullptr;
 	}
@@ -135,4 +152,10 @@ llvm::Function *dia::Function::codegen()
 
 	f->eraseFromParent();
 	return nullptr;
+}
+
+llvm::Value *dia::Char::codegen()
+{
+	llvm::Value *chr = llvm::ConstantInt::get(TheContext, llvm::APInt(32, int(val)));
+	return chr;
 }
