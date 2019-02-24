@@ -39,6 +39,7 @@ bool isparen(char a) { return a == '(' || a == ')'; }
 bool isnewline(char a) { return a == 0x0A; }
 bool isquote(char a) { return a == 0x22; }
 bool issinglequote(char a) { return a == '\''; }
+bool isbslash(char a) { return a == '\\'; }
 
 bool equals(std::string s, std::string e) { return s.compare(e) == 0; }
 bool contains(std::vector<std::string> list, std::string str)
@@ -186,8 +187,43 @@ class FileTokenizer
 				LogError("Character declaration empty.", line);
 				return;
 			}
+			if (isbslash(file.at(pos)))
+			{
+				pos++;
+				switch (file.at(pos))
+				{
+				case 'a':
+					value = string(1, '\a');
+					break;
+				case 'b':
+					value = string(1, '\b');
+					break;
+				case 'f':
+					value = string(1, '\f');
+					break;
+				case 'n':
+					value = string(1, '\n');
+					break;
+				case 'r':
+					value = string(1, '\r');
+					break;
+				case 't':
+					value = string(1, '\t');
+					break;
+				case 'v':
+					value = string(1, '\v');
+					break;
+				case '\\':
+					value = string(1, '\\');
+					break;
+				case '\'':
+					value = string(1, '\'');
+					break;
+				}
+			}
+			else
+				value = string(1, file.at(pos));
 			id = chr;
-			value = string(1, file.at(pos));
 			pos++;
 			if (!issinglequote(file.at(pos)))
 			{
