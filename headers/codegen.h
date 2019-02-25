@@ -44,9 +44,9 @@ llvm::Value *dia::Binary::codegen()
 		return nullptr;
 
 	if (L->getType()->isIntegerTy())
-		L = Builder.CreateSIToFP(L, llvm::Type::getInt32Ty(TheContext), "casttmp");
+		L = Builder.CreateSIToFP(L, llvm::Type::getDoubleTy(TheContext), "casttmp");
 	if (R->getType()->isIntegerTy())
-		R = Builder.CreateSIToFP(R, llvm::Type::getInt32Ty(TheContext), "casttmp");
+		R = Builder.CreateSIToFP(R, llvm::Type::getDoubleTy(TheContext), "casttmp");
 
 	switch (op)
 	{
