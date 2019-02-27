@@ -24,6 +24,8 @@ class Parser
 		binop["/"] = 30;
 		binop["+"] = 20;
 		binop["-"] = 20;
+		binop[">"] = 10;
+		binop["<"] = 10;
 	};
 
 	std::unique_ptr<dia::Base> parseNumber()
@@ -67,7 +69,7 @@ class Parser
 					break;
 				}
 				if (!tok().valis(","))
-					return LogError<dia::Base>("Expected ',' or ')'");
+					return LogError<dia::Base>(std::string("Expected ',' or ')', but got ") + std::string(tok().val()));
 				advance();
 			}
 		return std::make_unique<dia::Call>(idname, std::move(args));

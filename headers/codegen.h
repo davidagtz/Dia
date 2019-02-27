@@ -43,10 +43,20 @@ llvm::Value *dia::Binary::codegen()
 	if (!L || !R)
 		return nullptr;
 
+	// Type cast to double if they are ints
 	if (L->getType()->isIntegerTy())
 		L = Builder.CreateSIToFP(L, llvm::Type::getDoubleTy(TheContext), "casttmp");
 	if (R->getType()->isIntegerTy())
 		R = Builder.CreateSIToFP(R, llvm::Type::getDoubleTy(TheContext), "casttmp");
+
+	// Switch for greater than to less than
+	if (op == '>')
+	{
+		llvm::Value *t = L;
+		L = R;
+		R = t;
+		op = '<';
+	}
 
 	switch (op)
 	{

@@ -14,7 +14,9 @@ void Parser::handle_top_level(llvm::Function *f = nullptr, llvm::BasicBlock *BB 
             NamedValues[arg.getName()] = &arg;
 
         auto expr = parseExpr();
+        std::cout << "Start codegen" << std::endl;
         expr->codegen();
+        std::cout << "End codegen" << std::endl;
         return;
     }
     auto fn = parseTopLevel();
