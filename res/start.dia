@@ -1,6 +1,27 @@
 import int putchar(int)
-fn int put(int a) putchar(a)
-put('0' + (2 < 1))
-put('\n')
-put('0' + (2 > 1))
-put('\n')
+fn int put(int a) { putchar(a) }
+
+fn int putDavid() {
+    put('D')
+    put('A')
+    put('V')
+    put('I')
+    put('D')
+    put('\n')
+}
+
+fn int putOwen(int mod) {
+    put('O' + mod)
+    put('w' + mod)
+    put('e' + mod)
+    put('n' + mod)
+    put('\n')
+}
+
+putDavid()
+putDavid()
+
+putOwen(0)
+putOwen(3)
+
+put('0' + 4)

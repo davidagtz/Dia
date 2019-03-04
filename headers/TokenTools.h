@@ -36,7 +36,7 @@ std::vector<std::string> types({"int",
 								"fp"});
 
 bool isparen(char a) { return a == '(' || a == ')'; }
-bool isnewline(char a) { return a == 0x0A; }
+bool isnewline(char a) { return a == '\n'; }
 bool isquote(char a) { return a == 0x22; }
 bool issinglequote(char a) { return a == '\''; }
 bool isbslash(char a) { return a == '\\'; }
@@ -141,7 +141,7 @@ class FileTokenizer
 		else if (isnewline(curChar))
 		{
 			line++;
-			while (file.at(pos + 1) == 0x0A)
+			while (isnewline(file.at(pos + 1)))
 			{
 				pos++;
 				line++;

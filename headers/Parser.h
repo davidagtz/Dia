@@ -204,15 +204,34 @@ class Parser
 	std::unique_ptr<dia::Function> parseDef()
 	{
 		if (!tok().valis("fn"))
-			return nullptr;
+			return LogError<dia::Function>("Expected Function declaration to start with 'fn'");
 		advance();
 		auto proto = parsePrototype();
 		if (!proto)
 			return nullptr;
-		auto expr = parseExpr();
-		if (!expr)
-			return nullptr;
-		return std::make_unique<dia::Function>(std::move(proto), std::move(expr));
+		std::vector<std::unique_ptr<dia::Base>> body({});
+		if (tok().valis("{"))
+		{
+			advance();
+			while (!tok().valis("}"))
+			{
+				std::cout << std::string("DEF: ") + tok().toString() << std::endl;
+				auto expr = parseExpr();
+				if (!expr)
+					return nullptr;
+				body.push_back(std::move(expr));
+			}
+			std::cout << tok().val() << std::endl;
+			advance();
+		}
+		else
+		{
+			auto expr = parseExpr();
+			if (!expr)
+				return nullptr;
+			body.push_back(std::move(expr));
+		}
+		return std::make_unique<dia::Function>(std::move(proto), std::move(body));
 	};
 
 	std::unique_ptr<dia::Function> parseTopLevel()
@@ -220,8 +239,10 @@ class Parser
 		auto expr = parseExpr();
 		if (!expr)
 			return nullptr;
+		std::vector<std::unique_ptr<dia::Base>> body({});
+		body.push_back(std::move(expr));
 		auto proto = std::make_unique<dia::Prototype>("", std::vector<std::pair<std::string, Return>>(), Return::decimal);
-		return std::make_unique<dia::Function>(std::move(proto), std::move(expr));
+		return std::make_unique<dia::Function>(std::move(proto), std::move(body));
 	}
 
 	Return getReturnType(std::string ret)
@@ -252,9 +273,18 @@ class Parser
 	void advance(int i)
 	{
 		if (pos + i >= tokens.size())
+		{
 			pos = tokens.size() - 1;
+		}
 		else
+		{
 			pos += i;
+			while (tok().idis(eol))
+			{
+				pos += 1;
+				std::cout << tok().toString() << std::endl;
+			}
+		}
 	};
 
 	template <class T>

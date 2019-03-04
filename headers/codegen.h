@@ -153,7 +153,12 @@ llvm::Function *dia::Function::codegen()
 	for (auto &arg : f->args())
 		NamedValues[arg.getName()] = &arg;
 
-	if (llvm::Value *ret = body->codegen())
+	for (int i = 0; i < body.size() - 1; i++)
+	{
+		body.at(i)->codegen();
+	}
+
+	if (llvm::Value *ret = body.back()->codegen())
 	{
 		Builder.CreateRet(ret);
 		llvm::verifyFunction(*f);
