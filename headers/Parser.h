@@ -212,6 +212,14 @@ class Parser
 		auto proto = parsePrototype();
 		if (!proto)
 			return nullptr;
+		std::vector<std::unique_ptr<dia::Base>> body(parseExprBlock());
+		if (!body.back())
+			return nullptr;
+		return std::make_unique<dia::Function>(std::move(proto), std::move(body));
+	};
+
+	std::vector<std::unique_ptr<dia::Base>> parseExprBlock()
+	{
 		std::vector<std::unique_ptr<dia::Base>> body({});
 		if (tok().valis("{"))
 		{
@@ -220,9 +228,9 @@ class Parser
 			{
 				std::cout << std::string("DEF: ") + tok().toString() << std::endl;
 				auto expr = parseExpr();
-				if (!expr)
-					return nullptr;
 				body.push_back(std::move(expr));
+				if (!body.back())
+					return body;
 			}
 			std::cout << tok().val() << std::endl;
 			advance();
@@ -230,12 +238,12 @@ class Parser
 		else
 		{
 			auto expr = parseExpr();
-			if (!expr)
-				return nullptr;
 			body.push_back(std::move(expr));
+			if (!body.back())
+				return body;
 		}
-		return std::make_unique<dia::Function>(std::move(proto), std::move(body));
-	};
+		return body;
+	}
 
 	std::unique_ptr<dia::Function> parseTopLevel()
 	{
