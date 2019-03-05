@@ -160,6 +160,14 @@ llvm::Function *dia::Function::codegen()
 
 	if (llvm::Value *ret = body.back()->codegen())
 	{
+		llvm::Type *rt = f->getReturnType();
+		if (rt->isIntegerTy() ^ ret->getType()->isIntegerTy())
+		{
+			if (rt->isIntegerTy())
+				ret = Builder.CreateFPToSI(ret, llvm::Type::getInt32Ty(TheContext), "casttmp");
+			if (rt->isDoubleTy())
+				ret = Builder.CreateSIToFP(ret, llvm::Type::getDoubleTy(TheContext), "casttmp");
+		}
 		Builder.CreateRet(ret);
 		llvm::verifyFunction(*f);
 		return f;

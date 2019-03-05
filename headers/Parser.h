@@ -72,6 +72,9 @@ class Parser
 					return LogError<dia::Base>(std::string("Expected ',' or ')', but got ") + std::string(tok().val()));
 				advance();
 			}
+		else
+			advance();
+
 		return std::make_unique<dia::Call>(idname, std::move(args));
 	};
 

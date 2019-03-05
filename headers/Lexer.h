@@ -66,9 +66,9 @@ std::vector<token> lex(int argc, char **argv)
 	if (!showTokens)
 		return tokens;
 
-	for (token t : tokens)
+	for (int i = 0; i < tokens.size(); i++)
 	{
-		printTokens += t.toString() + "\n";
+		printTokens += to_string(i) + tokens.at(i).toString() + "\n";
 	}
 
 	if (out.compare("") == 0)
