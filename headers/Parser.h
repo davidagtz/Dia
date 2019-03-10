@@ -80,10 +80,6 @@ class Parser
 
 	std::unique_ptr<dia::Base> parsePrimary()
 	{
-		// std::cout << "Postion: " << pos << std::endl;
-		// std::cout << "Token ID: " << tok().getid() << std::endl;
-		// std::cout << "Token Value: " << tok().val() << std::endl
-		// 		  << std::endl;
 		switch (tok().getid())
 		{
 		case iden:
@@ -94,8 +90,10 @@ class Parser
 			return parseNumber();
 		case chr:
 			return parseChar();
+		case tok_if:
+			return parseIf();
 		default:
-			return LogError<dia::Base>("Unexpected Token");
+			return LogError<dia::Base>(std::string("Unexpected Token") + tok().toString() + tok().val());
 		}
 	};
 
@@ -204,6 +202,28 @@ class Parser
 		return std::make_unique<dia::Prototype>(fname, std::move(args), ret_type);
 	};
 
+	std::unique_ptr<dia::If> parseIf()
+	{
+		if (!tok().valis("if"))
+			return LogError<dia::If>("Expected 'if'");
+		advance();
+		if (!tok().valis("("))
+			return LogError<dia::If>("Expected condition starting with '('");
+		auto cond_expr = parseExpr();
+		if (!cond_expr)
+			return nullptr;
+		auto then_expr_block = parseExprBlock();
+		if (!then_expr_block.back())
+			return nullptr;
+		if (!tok().valis("else"))
+			return LogError<dia::If>("Expected else statement.");
+		advance();
+		auto else_expr_block = parseExprBlock();
+		if (!else_expr_block.back())
+			return nullptr;
+		return std::make_unique<dia::If>(std::move(cond_expr), std::move(then_expr_block), std::move(else_expr_block));
+	}
+
 	std::unique_ptr<dia::Function> parseDef()
 	{
 		if (!tok().valis("fn"))
@@ -226,13 +246,11 @@ class Parser
 			advance();
 			while (!tok().valis("}"))
 			{
-				std::cout << std::string("DEF: ") + tok().toString() << std::endl;
 				auto expr = parseExpr();
 				body.push_back(std::move(expr));
 				if (!body.back())
 					return body;
 			}
-			std::cout << tok().val() << std::endl;
 			advance();
 		}
 		else
@@ -293,7 +311,6 @@ class Parser
 			while (tok().idis(eol))
 			{
 				pos += 1;
-				std::cout << tok().toString() << std::endl;
 			}
 		}
 	};

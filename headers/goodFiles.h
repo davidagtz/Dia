@@ -18,7 +18,7 @@ std::string getFile(std::string &fileName)
 
 	if (in.is_open())
 	{
-		cout << "Opened File." << endl;
+		// cout << "Opened File." << endl;
 
 		string file("");
 

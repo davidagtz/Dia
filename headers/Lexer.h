@@ -15,7 +15,7 @@ std::vector<token> lex(int argc, char **argv)
 
 	string file = "";
 	string out = "";
-	bool showTokens = true;
+	bool showTokens = false;
 
 	for (int i = 1; i < argc; i++)
 	{
@@ -40,7 +40,7 @@ std::vector<token> lex(int argc, char **argv)
 		{
 			i++;
 
-			showTokens = args[i].compare("both") == 0;
+			showTokens = (args[i].compare("both") == 0) || (args[i].compare("tokens") == 0);
 
 			if (args[i].compare("file") == 0 || showTokens)
 				cout << endl

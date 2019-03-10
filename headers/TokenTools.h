@@ -18,15 +18,15 @@ enum tok_id
 	ext,
 	type,
 	chr,
+	tok_if,
+	tok_else,
 
 	//error handling
 	errHandle
 
 };
 
-std::vector<std::string> keywords({"if",
-								   "else",
-								   "elif",
+std::vector<std::string> keywords({"elif",
 								   "string",
 								   "bool",
 								   "from",
@@ -40,6 +40,7 @@ bool isnewline(char a) { return a == '\n'; }
 bool isquote(char a) { return a == 0x22; }
 bool issinglequote(char a) { return a == '\''; }
 bool isbslash(char a) { return a == '\\'; }
+bool isuscore(char a) { return a == '_'; }
 
 bool equals(std::string s, std::string e) { return s.compare(e) == 0; }
 bool contains(std::vector<std::string> list, std::string str)
@@ -97,7 +98,7 @@ class FileTokenizer
 
 		if (isalpha(curChar))
 		{
-			while (pos + 1 < file.size() && (isalpha(file.at(pos + 1)) || isdigit(file.at(pos + 1))))
+			while (pos + 1 < file.size() && (isalpha(file.at(pos + 1)) || isdigit(file.at(pos + 1)) || isuscore(file.at(pos + 1))))
 			{
 				pos++;
 				value += file.at(pos);
@@ -109,6 +110,10 @@ class FileTokenizer
 				id = def;
 			else if (equals(value, "import"))
 				id = ext;
+			else if (equals(value, "if"))
+				id = tok_if;
+			else if (equals(value, "else"))
+				id = tok_else;
 			else if (contains(keywords, value))
 				id = keyword;
 			else if (contains(types, value))

@@ -23,7 +23,10 @@ class Base
   public:
 	virtual ~Base() = default;
 	virtual llvm::Value *codegen() = 0;
-};
+	virtual llvm::Value *codegen(llvm::Type *type){};
+	virtual llvm::Value *type_cast(llvm::Value *from, llvm::Type *to, std::string msg);
+	std::string type = "";
+}; // namespace dia
 
 class Number : public Base
 {
@@ -104,5 +107,18 @@ class Char : public Base
   public:
 	Char(char val) : val(val){};
 	llvm::Value *codegen() override;
+};
+
+class If : public Base
+{
+	std::unique_ptr<Base> Cond;
+	std::vector<std::unique_ptr<Base>> Then, Else;
+	// std::string type;
+
+  public:
+	If(std::unique_ptr<Base> cond, std::vector<std::unique_ptr<Base>> then, std::vector<std::unique_ptr<Base>> Else)
+		: Cond(std::move(cond)), Then(std::move(then)), Else(std::move(Else)) { type = "if"; };
+	llvm::Value *codegen() override;
+	llvm::Value *codegen(llvm::Type *cast_to);
 };
 } // namespace dia

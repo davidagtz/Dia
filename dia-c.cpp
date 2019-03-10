@@ -64,6 +64,7 @@ int main(int argc, char **argv)
 			parse.handle_top_level(fmain, BB);
 			break;
 		}
+		cout << "\e[92m--------------------------------\e[0m" << std::endl;
 	}
 
 	Builder.CreateRet(llvm::ConstantInt::get(TheContext, llvm::APInt(32, 0)));
