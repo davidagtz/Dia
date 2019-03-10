@@ -20,6 +20,7 @@ enum tok_id
 	chr,
 	tok_if,
 	tok_else,
+	cmt,
 
 	//error handling
 	errHandle
@@ -40,6 +41,7 @@ bool isnewline(char a) { return a == '\n'; }
 bool isquote(char a) { return a == 0x22; }
 bool issinglequote(char a) { return a == '\''; }
 bool isbslash(char a) { return a == '\\'; }
+bool isfslash(char a) { return a == '/'; }
 bool isuscore(char a) { return a == '_'; }
 
 bool equals(std::string s, std::string e) { return s.compare(e) == 0; }
@@ -95,6 +97,19 @@ class FileTokenizer
 
 		string value = string(1, curChar);
 		int id = -1;
+
+		if (isfslash(curChar))
+		{
+			if (isfslash(file.at(pos + 1)))
+			{
+				while (!isnewline(file.at(pos)))
+				{
+					pos++;
+				}
+				curChar = file.at(pos);
+				string value = string(1, curChar);
+			}
+		}
 
 		if (isalpha(curChar))
 		{
@@ -152,6 +167,7 @@ class FileTokenizer
 				line++;
 			}
 			id = eol;
+			value = "\n";
 		}
 		else if (isquote(curChar))
 		{
