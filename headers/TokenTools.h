@@ -21,6 +21,7 @@ enum tok_id
 	tok_if,
 	tok_else,
 	cmt,
+	inc,
 
 	//error handling
 	errHandle
@@ -93,30 +94,31 @@ class FileTokenizer
 	{
 		using namespace std;
 
-		char curChar = file.at(pos);
+#define curChar file.at(pos)
+#define to(i) (file.at(pos + i))
 
 		string value = string(1, curChar);
 		int id = -1;
 
 		if (isfslash(curChar))
 		{
-			if (isfslash(file.at(pos + 1)))
+			if (isfslash(to(1)))
 			{
-				while (!isnewline(file.at(pos)))
+				while (!isnewline(curChar))
 				{
 					pos++;
 				}
-				curChar = file.at(pos);
+				curChar = curChar;
 				string value = string(1, curChar);
 			}
 		}
 
 		if (isalpha(curChar))
 		{
-			while (pos + 1 < file.size() && (isalpha(file.at(pos + 1)) || isdigit(file.at(pos + 1)) || isuscore(file.at(pos + 1))))
+			while (pos + 1 < file.size() && (isalpha(to(1)) || isdigit(to(1)) || isuscore(to(1))))
 			{
 				pos++;
-				value += file.at(pos);
+				value += curChar;
 			}
 
 			if (equals(value, "true") || equals(value, "false"))
@@ -140,13 +142,13 @@ class FileTokenizer
 		{
 			bool hasdec = false;
 
-			while (pos + 1 < file.size() && (((file.at(pos + 1) == '.') && !hasdec) || isdigit(file.at(pos + 1))))
+			while (pos + 1 < file.size() && (((to(1) == '.') && !hasdec) || isdigit(to(1))))
 			{
 				pos++;
 
-				value += file.at(pos);
+				value += curChar;
 
-				if (file.at(pos) == '.')
+				if (curChar == '.')
 				{
 					hasdec = true;
 				}
@@ -161,7 +163,7 @@ class FileTokenizer
 		else if (isnewline(curChar))
 		{
 			line++;
-			while (isnewline(file.at(pos + 1)))
+			while (isnewline(to(1)))
 			{
 				pos++;
 				line++;
@@ -172,18 +174,18 @@ class FileTokenizer
 		else if (isquote(curChar))
 		{
 			value = "";
-			while (file.size() > pos && !isquote(file.at(pos + 1)))
+			while (file.size() > pos && !isquote(to(1)))
 			{
 				pos++;
 
-				if (file.at(pos) == '\\')
+				if (curChar == '\\')
 				{
 					pos++;
-					if (file.at(pos) == '\"')
+					if (curChar == '\"')
 					{
 						value += "\"";
 					}
-					else if (file.at(pos) == '\\')
+					else if (curChar == '\\')
 					{
 						value += "\\";
 					}
@@ -195,7 +197,7 @@ class FileTokenizer
 					pos++;
 				}
 
-				value += file.at(pos);
+				value += curChar;
 			}
 			pos++;
 			id = str;
@@ -203,15 +205,15 @@ class FileTokenizer
 		else if (issinglequote(curChar))
 		{
 			pos++;
-			if (issinglequote(file.at(pos)))
+			if (issinglequote(curChar))
 			{
 				LogError("Character declaration empty.", line);
 				return;
 			}
-			if (isbslash(file.at(pos)))
+			if (isbslash(curChar))
 			{
 				pos++;
-				switch (file.at(pos))
+				switch (curChar)
 				{
 				case 'a':
 					value = string(1, '\a');
@@ -243,10 +245,10 @@ class FileTokenizer
 				}
 			}
 			else
-				value = string(1, file.at(pos));
+				value = string(1, curChar);
 			id = chr;
 			pos++;
-			if (!issinglequote(file.at(pos)))
+			if (!issinglequote(curChar))
 			{
 				LogError("Character declaration has more than one character declared.", line);
 				return;
@@ -263,6 +265,8 @@ class FileTokenizer
 
 		CurTok = token(value, id);
 		pos++;
+#undef curChar
+#undef to
 	}
 
 	void LogError(std::string err, ull l)
@@ -271,6 +275,8 @@ class FileTokenizer
 
 		CurTok = token(err, errHandle);
 	}
+
+	char get(int off) { return file.at(pos + off); }
 
 	std::vector<token> getTokens()
 	{
@@ -287,21 +293,4 @@ class FileTokenizer
 		}
 		return tokens;
 	}
-};
-
-std::vector<std::string> split(std::string arg, std::string delim)
-{
-	std::vector<std::string> splitted({});
-	int i = 0;
-	do
-	{
-		while (equals(arg.substr(i, i + delim.size()), delim))
-		{
-			arg = arg.substr(1);
-		}
-		i = arg.find(delim);
-		splitted.push_back(arg.substr(0, i));
-		arg = arg.substr(i + delim.size());
-	} while (i != -1);
-	return splitted;
 };

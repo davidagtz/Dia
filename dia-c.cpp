@@ -70,7 +70,11 @@ int main(int argc, char **argv)
 	Builder.CreateRet(llvm::ConstantInt::get(TheContext, llvm::APInt(32, 0)));
 	llvm::verifyFunction(*fmain);
 
-	TheModule->print(llvm::errs(), nullptr);
+	llvm::StringRef sr(output);
+	error_code ec;
+	llvm::raw_fd_ostream os(sr, ec);
+
+	TheModule->print(os, nullptr);
 
 	return 0;
 }
