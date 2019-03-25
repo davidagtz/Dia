@@ -11,14 +11,16 @@ static std::map<std::string, llvm::Value *> NamedValues;
 static std::unique_ptr<llvm::Module> TheModule;
 // static std::unique_ptr<KaleidoscopeJIT> TheJIT;
 
-llvm::Value *LogError(std::string msg)
+llvm::Value *LogError(std::string msg, unsigned long long line)
 {
+	std::cout << "Line: " << line << std::endl;
 	std::cout << msg << std::endl;
 	return nullptr;
 }
 
-llvm::Function *LogErrorP(std::string msg)
+llvm::Function *LogErrorP(std::string msg, unsigned long long line)
 {
+	std::cout << "Line: " << line << std::endl;
 	std::cout << msg << std::endl;
 	return nullptr;
 }
@@ -33,7 +35,7 @@ llvm::Value *dia::Base::type_cast(llvm::Value *from, llvm::Type *to, std::string
 		else if (from->getType()->isDoubleTy())
 			from = Builder.CreateFPToSI(from, llvm::Type::getInt32Ty(TheContext), "casttmp");
 		else
-			return LogError(std::string("Invalid Type") + msg);
+			return LogError(std::string("Invalid Type") + msg, line);
 	}
 	// std::cout << "Success" << std::endl;
 	return from;
@@ -49,7 +51,7 @@ llvm::Value *dia::Variable::codegen()
 	llvm::Value *V = NamedValues[name];
 	if (V)
 		return V;
-	return LogError("Unknown Var Name");
+	return LogError("Unknown Var Name", line);
 };
 
 llvm::Value *dia::Binary::codegen()
@@ -89,7 +91,7 @@ llvm::Value *dia::Binary::codegen()
 		return Builder.CreateUIToFP(L, llvm::Type::getDoubleTy(TheContext),
 									"booltmp");
 	default:
-		return LogError("invalid binary operator");
+		return LogError("invalid binary operator", line);
 	}
 };
 
@@ -97,10 +99,10 @@ llvm::Value *dia::Call::codegen()
 {
 	llvm::Function *func = TheModule->getFunction(callee);
 	if (!func)
-		return LogError("Unknown function.");
+		return LogError("Unknown function.", line);
 
 	if (func->arg_size() != args.size())
-		return LogError("Incorrect # arguments passed");
+		return LogError("Incorrect # arguments passed", line);
 
 	std::vector<llvm::Value *> argsv;
 	for (unsigned i = 0; i < args.size(); i++)
@@ -115,7 +117,11 @@ llvm::Value *dia::Call::codegen()
 				else if (c_arg->getType()->isDoubleTy() && t->getType()->isIntegerTy())
 					t = Builder.CreateSIToFP(t, llvm::Type::getDoubleTy(TheContext), "casttmp");
 				else
-					LogError(std::string("Invalid Type for Parameter ") + std::to_string(i + 1) + std::string(" of call to ") + callee);
+					LogError(std::string("Invalid Type for Parameter ") +
+								 std::to_string(i + 1) +
+								 std::string(" of call to ") +
+								 callee,
+							 line);
 			}
 			argsv.push_back(t);
 		}
@@ -136,14 +142,17 @@ llvm::Function *dia::Prototype::codegen()
 		else if (args.at(i).second == Return::integer)
 			Doubles.push_back(llvm::Type::getInt32Ty(TheContext));
 		else
-			return LogErrorP("Not a valid type for the argument in the prototype");
+			return LogErrorP("Not a valid type for the argument in the prototype", line);
 	}
 	llvm::FunctionType *t;
 	if (ret_type == Return::integer)
 		t = llvm::FunctionType::get(llvm::Type::getInt32Ty(TheContext), Doubles, false);
 	else if (ret_type == Return::decimal)
 		t = llvm::FunctionType::get(llvm::Type::getDoubleTy(TheContext), Doubles, false);
-	llvm::Function *f = llvm::Function::Create(t, llvm::Function::ExternalLinkage, name, TheModule.get());
+	llvm::Function *f = llvm::Function::Create(t,
+											   llvm::Function::ExternalLinkage,
+											   name,
+											   TheModule.get());
 
 	unsigned i = 0;
 	for (auto &arg : f->args())
@@ -205,7 +214,6 @@ llvm::Function *dia::Function::codegen()
 		llvm::Type *rt = f->getReturnType();
 		if (rt->getTypeID() != ret->getType()->getTypeID())
 		{
-			// std::cout << "TYPE IS " << ret->getType()->getTypeID() << " " << std::endl; //ret->getType()->isDoubleTy() << std::endl;
 			if (ret->getType()->isDoubleTy())
 				ret = Builder.CreateFPToSI(ret, llvm::Type::getInt32Ty(TheContext), "casttmp");
 			else if (ret->getType()->isIntegerTy())
@@ -233,7 +241,10 @@ llvm::Value *dia::If::codegen(llvm::Type *cast_to)
 	if (!condv)
 		return nullptr;
 
-	condv = Builder.CreateFCmpONE(condv, llvm::ConstantFP::get(TheContext, llvm::APFloat(0.0)), "ifcond");
+	condv = Builder.CreateFCmpONE(condv,
+								  llvm::ConstantFP::get(TheContext,
+														llvm::APFloat(0.0)),
+								  "ifcond");
 
 	llvm::Function *function = Builder.GetInsertBlock()->getParent();
 	llvm::BasicBlock *thenbb = llvm::BasicBlock::Create(TheContext, "then", function);
@@ -250,6 +261,8 @@ llvm::Value *dia::If::codegen(llvm::Type *cast_to)
 	for (int i = 0; i < Then.size(); i++)
 	{
 		thenv.push_back(Then.at(i)->codegen());
+		if (!thenv.back())
+			return nullptr;
 		if (thenv.back()->getType()->isDoubleTy())
 			has_doubles = true;
 		if (thenv.back()->getType()->isIntegerTy())
@@ -270,6 +283,8 @@ llvm::Value *dia::If::codegen(llvm::Type *cast_to)
 	for (int i = 0; i < Else.size(); i++)
 	{
 		elsev.push_back(Else.at(i)->codegen());
+		if (!elsev.back())
+			return nullptr;
 		if (thenv.back()->getType()->isDoubleTy())
 			has_doubles = true;
 		if (thenv.back()->getType()->isIntegerTy())
@@ -317,4 +332,69 @@ llvm::Value *dia::If::codegen(llvm::Type *cast_to)
 llvm::Value *dia::If::codegen()
 {
 	return codegen(llvm::Type::getInt32Ty(TheContext));
+}
+
+llvm::Value *dia::From::codegen()
+{
+	llvm::Value *StartVal = Start->codegen();
+	if (!StartVal)
+		return nullptr;
+
+	llvm::Function *TheFunction = Builder.GetInsertBlock()->getParent();
+	llvm::BasicBlock *PreheaderBB = Builder.GetInsertBlock();
+	llvm::BasicBlock *LoopBB = llvm::BasicBlock::Create(TheContext, "loop", TheFunction);
+
+	Builder.CreateBr(LoopBB);
+	Builder.SetInsertPoint(LoopBB);
+
+	llvm::PHINode *Variable =
+		Builder.CreatePHI(llvm::Type::getDoubleTy(TheContext), 2, idname);
+	Variable->addIncoming(StartVal, PreheaderBB);
+
+	llvm::Value *OldVal = NamedValues[idname];
+	NamedValues[idname] = Variable;
+
+	for (int i = 0; i < Body.size(); i++)
+		if (!Body.at(i)->codegen())
+			return nullptr;
+
+	llvm::Value *StepVal = nullptr;
+	if (Step)
+	{
+		StepVal = Step->codegen();
+		if (!StepVal)
+			return nullptr;
+	}
+	else
+	{
+		StepVal = llvm::ConstantFP::get(TheContext, llvm::APFloat(1.0));
+	}
+
+	llvm::Value *NextVar = Builder.CreateFAdd(Variable, StepVal, "nextvar");
+
+	llvm::Value *EndCond = End->codegen();
+	std::cout << End->type << " " << End->val << std::endl;
+	if (!EndCond)
+		return LogError("End condition not compiled", line);
+
+	std::cout << "End cond start" << std::endl;
+	auto EndCondC = Builder.CreateFCmpONE(
+		NextVar, EndCond, "loopcond");
+	std::cout << "End cond end" << std::endl;
+
+	llvm::BasicBlock *LoopEndBB = Builder.GetInsertBlock();
+	llvm::BasicBlock *AfterBB =
+		llvm::BasicBlock::Create(TheContext, "afterloop", TheFunction);
+
+	Builder.CreateCondBr(EndCondC, LoopBB, AfterBB);
+	Builder.SetInsertPoint(AfterBB);
+
+	Variable->addIncoming(NextVar, LoopEndBB);
+
+	if (OldVal)
+		NamedValues[idname] = OldVal;
+	else
+		NamedValues.erase(idname);
+
+	return llvm::Constant::getNullValue(llvm::Type::getDoubleTy(TheContext));
 }

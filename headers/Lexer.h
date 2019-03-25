@@ -26,7 +26,8 @@ std::vector<token> lex(int argc, char **argv)
 	// Get the file
 	string file = tools::getFile(args[1]);
 
-	string out = "a.out";
+	string out = "";
+	output = "a.dc";
 	bool showTokens = false;
 
 	for (int i = 2; i < argc; i++)

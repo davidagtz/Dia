@@ -47,6 +47,43 @@ class Parser
 		return expr;
 	};
 
+	std::unique_ptr<dia::Base> parseFrom()
+	{
+		if (!tok().idis(tok_from))
+			return LogError<dia::Base>("Expected to see 'from'");
+		advance();
+		if (!tok().idis(iden))
+			return LogError<dia::Base>("Expected to see variable name");
+		std::string idname = tok().val();
+		advance();
+		if (!tok().idis(tok_is))
+			return LogError<dia::Base>("Expected to see 'is'");
+		advance();
+		auto start = parseExpr();
+		if (!start)
+			return nullptr;
+		if (!tok().idis(tok_to))
+			return LogError<dia::Base>("Expected to see 'to'");
+		advance();
+		std::cout << tok().id << " " << tok().val() << std::endl;
+		auto end = parseExpr();
+		std::cout << end->val << std::endl;
+		if (!end)
+			return nullptr;
+		std::unique_ptr<dia::Base> Step = nullptr;
+		if (tok().idis(tok_step))
+		{
+			advance();
+			Step = parseExpr();
+			if (!Step)
+				return nullptr;
+		}
+		auto body = parseExprBlock();
+		if (!body.back())
+			return nullptr;
+		return std::make_unique<dia::From>(idname, std::move(start), std::move(end), std::move(Step), std::move(body));
+	};
+
 	std::unique_ptr<dia::Base> parseIden()
 	{
 		std::string idname = tok().val();
@@ -86,12 +123,14 @@ class Parser
 			return parseIden();
 		case paren:
 			return parseParenExpr();
-		case num:
+		case tok_num:
 			return parseNumber();
 		case chr:
 			return parseChar();
 		case tok_if:
 			return parseIf();
+		case tok_from:
+			return parseFrom();
 		default:
 			return LogError<dia::Base>(std::string("Unexpected Token") + tok().toString() + tok().val());
 		}
@@ -311,6 +350,7 @@ class Parser
 			while (tok().idis(eol))
 			{
 				pos += 1;
+				line += 1;
 			}
 		}
 	};

@@ -6,10 +6,10 @@ enum tok_id
 {
 	// types
 
-	num,
-	str,
-	bln,
-	op,
+	tok_num,
+	tok_str,
+	tok_bln,
+	tok_op,
 	paren,
 	iden,
 	def,
@@ -22,18 +22,17 @@ enum tok_id
 	tok_else,
 	cmt,
 	inc,
+	tok_from,
+	tok_is,
+	tok_to,
+	tok_step,
 
 	//error handling
 	errHandle
 
 };
 
-std::vector<std::string> keywords({"elif",
-								   "string",
-								   "bool",
-								   "from",
-								   "to",
-								   "as"});
+std::vector<std::string> keywords({});
 std::vector<std::string> types({"int",
 								"fp"});
 
@@ -59,13 +58,14 @@ class token
   public:
 	std::string value;
 	int id;
+	unsigned long long line;
 
 	std::string toString()
 	{
 		return (value == "\n" ? "eol" : value) + " " + std::to_string(id);
 	}
 
-	token(std::string val, int identifier) : value(val), id(identifier) {}
+	token(std::string val, int identifier, unsigned long long line) : value(val), id(identifier) {}
 	token() {}
 
 	bool valis(std::string val) { return value.compare(val) == 0; }
@@ -76,7 +76,7 @@ class token
 
 std::vector<token> err_vector()
 {
-	return std::vector<token>({token("Error", errHandle)});
+	return std::vector<token>({token("Error", errHandle, 0)});
 };
 
 class FileTokenizer
@@ -122,7 +122,7 @@ class FileTokenizer
 			}
 
 			if (equals(value, "true") || equals(value, "false"))
-				id = bln;
+				id = tok_bln;
 			else if (equals(value, "fn"))
 				id = def;
 			else if (equals(value, "import"))
@@ -131,6 +131,14 @@ class FileTokenizer
 				id = tok_if;
 			else if (equals(value, "else"))
 				id = tok_else;
+			else if (equals(value, "from"))
+				id = tok_from;
+			else if (equals(value, "is"))
+				id = tok_is;
+			else if (equals(value, "to"))
+				id = tok_to;
+			else if (equals(value, "step"))
+				id = tok_step;
 			else if (contains(keywords, value))
 				id = keyword;
 			else if (contains(types, value))
@@ -154,7 +162,7 @@ class FileTokenizer
 				}
 			}
 
-			id = num;
+			id = tok_num;
 		}
 		else if (isparen(curChar))
 		{
@@ -200,7 +208,7 @@ class FileTokenizer
 				value += curChar;
 			}
 			pos++;
-			id = str;
+			id = tok_str;
 		}
 		else if (issinglequote(curChar))
 		{
@@ -263,7 +271,7 @@ class FileTokenizer
 			return;
 		}
 
-		CurTok = token(value, id);
+		CurTok = token(value, id, line);
 		pos++;
 #undef curChar
 #undef to
@@ -273,7 +281,7 @@ class FileTokenizer
 	{
 		std::cerr << "line " << l << ": " << err << std::endl;
 
-		CurTok = token(err, errHandle);
+		CurTok = token(err, errHandle, l);
 	}
 
 	char get(int off) { return file.at(pos + off); }

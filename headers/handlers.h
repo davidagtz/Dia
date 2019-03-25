@@ -25,9 +25,13 @@ void Parser::handle_top_level(llvm::Function *f = nullptr, llvm::BasicBlock *BB 
         auto *ir = fn->codegen();
         if (ir)
         {
-            std::cout << "Read top-level expression:" << std::endl;
-            ir->print(llvm::outs());
-            std::cout << std::endl;
+            // std::cout << "Read top-level expression:" << std::endl;
+            // ir->print(llvm::outs());
+            // std::cout << std::endl;
+        }
+        else
+        {
+            std::cout << "definition error" << std::endl;
         }
     }
     else
@@ -45,9 +49,13 @@ void Parser::handle_def()
         auto *ir = fn->codegen();
         if (ir)
         {
-            std::cout << "Read function definition:";
-            ir->print(llvm::outs());
-            std::cout << std::endl;
+            // std::cout << "Read function definition:";
+            // ir->print(llvm::outs());
+            // std::cout << std::endl;
+        }
+        else
+        {
+            std::cout << "definition error" << std::endl;
         }
     }
     else
@@ -66,9 +74,9 @@ void Parser::handle_extern()
         auto *ir = fn->codegen();
         if (ir)
         {
-            std::cout << "Read extern definition:";
-            ir->print(llvm::outs());
-            std::cout << std::endl;
+            // std::cout << "Read extern definition:";
+            // ir->print(llvm::outs());
+            // std::cout << std::endl;
         }
         else
             std::cout << "no extern" << std::endl;

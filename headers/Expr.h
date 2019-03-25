@@ -26,14 +26,20 @@ class Base
 	virtual llvm::Value *codegen(llvm::Type *type){};
 	virtual llvm::Value *type_cast(llvm::Value *from, llvm::Type *to, std::string msg);
 	std::string type = "";
-}; // namespace dia
+	unsigned long long line = 0;
+	double val = 0;
+};
 
 class Number : public Base
 {
 	double val;
 
   public:
-	Number(double num) : val(num){};
+	Number(double num)
+	{
+		type = "number";
+		val = num;
+	};
 	llvm::Value *codegen() override;
 };
 
@@ -120,5 +126,21 @@ class If : public Base
 		: Cond(std::move(cond)), Then(std::move(then)), Else(std::move(Else)) { type = "if"; };
 	llvm::Value *codegen() override;
 	llvm::Value *codegen(llvm::Type *cast_to);
+};
+
+class From : public Base
+{
+	std::string idname;
+	std::unique_ptr<Base> Start, End, Step;
+	std::vector<std::unique_ptr<Base>> Body;
+
+  public:
+	From(std::string idname,
+		 std::unique_ptr<Base> Start,
+		 std::unique_ptr<Base> End,
+		 std::unique_ptr<Base> Step,
+		 std::vector<std::unique_ptr<Base>> Body)
+		: idname(idname), Start(std::move(Start)), End(std::move(End)), Step(std::move(Step)), Body(std::move(Body)){};
+	llvm::Value *codegen() override;
 };
 } // namespace dia
