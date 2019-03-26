@@ -26,6 +26,7 @@ enum tok_id
 	tok_is,
 	tok_to,
 	tok_step,
+	tok_give,
 
 	//error handling
 	errHandle
@@ -43,6 +44,7 @@ bool issinglequote(char a) { return a == '\''; }
 bool isbslash(char a) { return a == '\\'; }
 bool isfslash(char a) { return a == '/'; }
 bool isuscore(char a) { return a == '_'; }
+bool ishyphen(char a) { return a == '-'; }
 
 bool equals(std::string s, std::string e) { return s.compare(e) == 0; }
 bool contains(std::vector<std::string> list, std::string str)
@@ -100,17 +102,21 @@ class FileTokenizer
 		string value = string(1, curChar);
 		int id = -1;
 
-		if (isfslash(curChar))
+		if (isfslash(curChar) && isfslash(to(1)))
 		{
-			if (isfslash(to(1)))
+			while (pos < file.size() && !isnewline(curChar))
 			{
-				while (!isnewline(curChar))
-				{
-					pos++;
-				}
-				curChar = curChar;
-				string value = string(1, curChar);
+				if (isnewline(curChar))
+					line++;
+				pos++;
 			}
+			if (pos == file.size())
+			{
+				CurTok = token("\n", eol, line);
+				return;
+			}
+			curChar = curChar;
+			string value = string(1, curChar);
 		}
 
 		if (isalpha(curChar))
@@ -139,6 +145,8 @@ class FileTokenizer
 				id = tok_to;
 			else if (equals(value, "step"))
 				id = tok_step;
+			else if (equals(value, "give"))
+				id = tok_give;
 			else if (contains(keywords, value))
 				id = keyword;
 			else if (contains(types, value))
@@ -146,7 +154,8 @@ class FileTokenizer
 			else
 				id = iden;
 		}
-		else if (isdigit(curChar))
+		else if (isdigit(curChar) ||
+				 (ishyphen(curChar) && !isdigit(to(-1)) && (isdigit(to(1)) || to(1) == '.')))
 		{
 			bool hasdec = false;
 

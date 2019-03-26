@@ -9,7 +9,14 @@ static llvm::LLVMContext TheContext;
 static llvm::IRBuilder<> Builder(TheContext);
 static std::map<std::string, llvm::Value *> NamedValues;
 static std::unique_ptr<llvm::Module> TheModule;
-// static std::unique_ptr<KaleidoscopeJIT> TheJIT;
+
+llvm::Value *cast_codegen(dia::Base *val, llvm::Type *cast_to)
+{
+	if (val->type.compare("if") == 0)
+		return val->codegen(cast_to);
+	else
+		return val->codegen();
+}
 
 llvm::Value *LogError(std::string msg, unsigned long long line)
 {
@@ -35,7 +42,7 @@ llvm::Value *dia::Base::type_cast(llvm::Value *from, llvm::Type *to, std::string
 		else if (from->getType()->isDoubleTy())
 			from = Builder.CreateFPToSI(from, llvm::Type::getInt32Ty(TheContext), "casttmp");
 		else
-			return LogError(std::string("Invalid Type") + msg, line);
+			return LogError(std::string("Invalid Type ") + msg, line);
 	}
 	// std::cout << "Success" << std::endl;
 	return from;
@@ -190,12 +197,7 @@ llvm::Function *dia::Function::codegen()
 		NamedValues[arg.getName()] = &arg;
 
 	for (int i = 0; i < body.size() - 1; i++)
-	{
-		if (body.at(i)->type.compare("if") == 0)
-			body.at(i)->codegen(get_type(prototype->ret_type));
-		else
-			body.at(i)->codegen();
-	}
+		cast_codegen(body.at(i), get_type(prototype->ret_type));
 
 	llvm::Value *ret;
 	// std::cout << body.back()->type << std::endl;
@@ -397,4 +399,13 @@ llvm::Value *dia::From::codegen()
 		NamedValues.erase(idname);
 
 	return llvm::Constant::getNullValue(llvm::Type::getDoubleTy(TheContext));
+}
+
+dia::Give::codegen()
+{
+	return codegen(llvm::Type::getInt32Ty(TheContext));
+}
+dia::Give::codegen(llvm::Type *cast_to)
+{
+	return Builder.CreateRet(type_cast(val->codegen(), cast_to));
 }

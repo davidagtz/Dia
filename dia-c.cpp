@@ -42,14 +42,14 @@ int main(int argc, char **argv)
 		if (tokens.at(i).idis(errHandle))
 			return 1;
 
-	Parser parse(tokens);
+	Parser parse(std::move(tokens));
 
 	llvm::Function *fmain = getMainFunction();
 	llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", fmain);
 
-	while (parse.pos < tokens.size() - 1)
+	while (parse.pos < parse.size() - 1)
 	{
-		switch (tokens.at(parse.pos).getid())
+		switch (parse.at(parse.pos).getid())
 		{
 		case def:
 			parse.handle_def();

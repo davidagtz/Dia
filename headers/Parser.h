@@ -11,11 +11,11 @@
 
 class Parser
 {
-	std::vector<token> tokens;
 	ull line;
 	std::map<std::string, int> binop;
 
   public:
+	std::vector<token> tokens;
 	ull pos;
 	Parser(std::vector<token> toks) : tokens(toks), binop(), pos(0), line(0)
 	{
@@ -27,6 +27,13 @@ class Parser
 		binop[">"] = 10;
 		binop["<"] = 10;
 	};
+
+	token at(int i)
+	{
+		return tokens.at(i);
+	}
+
+	int size() { return tokens.size(); };
 
 	std::unique_ptr<dia::Base> parseNumber()
 	{
@@ -131,10 +138,21 @@ class Parser
 			return parseIf();
 		case tok_from:
 			return parseFrom();
+		case tok_give:
+			return parseGive();
 		default:
 			return LogError<dia::Base>(std::string("Unexpected Token") + tok().toString() + tok().val());
 		}
 	};
+
+	std::unique_ptr<dia::Give> parseGive()
+	{
+		advance();
+		auto ret = parseExpr();
+		if (!ret)
+			return nullptr;
+		return std::make_unique<dia::Give>(std::move(ret));
+	}
 
 	std::unique_ptr<dia::Char> parseChar()
 	{
