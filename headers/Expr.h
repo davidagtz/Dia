@@ -23,7 +23,7 @@ class Base
 public:
 	virtual ~Base() = default;
 	virtual llvm::Value *codegen() = 0;
-	virtual llvm::Value *codegen(llvm::Type *type){};
+	virtual llvm::Value *codegen(llvm::Type *type) { codegen(); };
 	virtual llvm::Value *type_cast(llvm::Value *from, llvm::Type *to, std::string msg);
 	std::string type = "";
 	unsigned long long line = 0;
@@ -48,7 +48,7 @@ class Variable : public Base
 	std::string name;
 
 public:
-	Variable(std::string n) : name(n){};
+	Variable(std::string n) : name(n) { type = "variable"; };
 	llvm::Value *codegen() override;
 };
 
@@ -60,7 +60,7 @@ class Binary : public Base
 
 public:
 	Binary(char oper, std::unique_ptr<Base> left, std::unique_ptr<Base> right)
-			: op(oper), LHS(std::move(left)), RHS(std::move(right)){};
+			: op(oper), LHS(std::move(left)), RHS(std::move(right)) { type = "expression"; };
 	llvm::Value *codegen() override;
 };
 
@@ -71,7 +71,7 @@ class Call : public Base
 
 public:
 	Call(std::string callee, std::vector<std::unique_ptr<Base>> arguments)
-			: callee(callee), args(std::move(arguments)){};
+			: callee(callee), args(std::move(arguments)) { type = "call"; };
 	llvm::Value *codegen() override;
 	std::string toString()
 	{
@@ -87,7 +87,7 @@ class Prototype : public Base
 public:
 	Return ret_type;
 	Prototype(std::string name, std::vector<std::pair<std::string, Return>> args, Return ret_type)
-			: name(name), args(std::move(args)), ret_type(ret_type){};
+			: name(name), args(std::move(args)), ret_type(ret_type) { type = "prototype"; };
 	llvm::Function *codegen() override;
 	std::string getName()
 	{
@@ -102,7 +102,7 @@ class Function : public Base
 
 public:
 	Function(std::unique_ptr<Prototype> proto, std::vector<std::unique_ptr<Base>> body)
-			: prototype(std::move(proto)), body(std::move(body)){};
+			: prototype(std::move(proto)), body(std::move(body)) { type = "function"; };
 	llvm::Function *codegen() override;
 };
 
@@ -111,7 +111,7 @@ class Char : public Base
 	char val;
 
 public:
-	Char(char val) : val(val){};
+	Char(char val) : val(val) { type = "character"; };
 	llvm::Value *codegen() override;
 };
 
@@ -122,7 +122,9 @@ class If : public Base
 	// std::string type;
 
 public:
-	If(std::unique_ptr<Base> cond, std::vector<std::unique_ptr<Base>> then, std::vector<std::unique_ptr<Base>> Else)
+	If(std::unique_ptr<Base> cond,
+		 std::vector<std::unique_ptr<Base>> then,
+		 std::vector<std::unique_ptr<Base>> Else)
 			: Cond(std::move(cond)), Then(std::move(then)), Else(std::move(Else)) { type = "if"; };
 	llvm::Value *codegen() override;
 	llvm::Value *codegen(llvm::Type *cast_to);
@@ -140,7 +142,11 @@ public:
 			 std::unique_ptr<Base> End,
 			 std::unique_ptr<Base> Step,
 			 std::vector<std::unique_ptr<Base>> Body)
-			: idname(idname), Start(std::move(Start)), End(std::move(End)), Step(std::move(Step)), Body(std::move(Body)){};
+			: idname(idname),
+				Start(std::move(Start)),
+				End(std::move(End)),
+				Step(std::move(Step)),
+				Body(std::move(Body)) { type = "from"; };
 	llvm::Value *codegen() override;
 };
 
@@ -149,7 +155,8 @@ class Give : public Base
 	std::unique_ptr<Base> give;
 
 public:
-	Give(std::unique_ptr<Base> give) : give(std::move(give)){};
+	Give(std::unique_ptr<Base> give) : give(std::move(give)) { type = "give"; };
 	llvm::Value *codegen() override;
-}
+	llvm::Value *codegen(llvm::Type *cast_to);
+};
 } // namespace dia

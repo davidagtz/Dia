@@ -10,9 +10,10 @@ static llvm::IRBuilder<> Builder(TheContext);
 static std::map<std::string, llvm::Value *> NamedValues;
 static std::unique_ptr<llvm::Module> TheModule;
 
-llvm::Value *cast_codegen(dia::Base *val, llvm::Type *cast_to)
+llvm::Value *cast_codegen(std::unique_ptr<dia::Base> val, llvm::Type *cast_to)
 {
-	if (val->type.compare("if") == 0)
+	if (val->type.compare("if") == 0 ||
+		val->type.compare("give") == 0)
 		return val->codegen(cast_to);
 	else
 		return val->codegen();
@@ -106,7 +107,7 @@ llvm::Value *dia::Call::codegen()
 {
 	llvm::Function *func = TheModule->getFunction(callee);
 	if (!func)
-		return LogError("Unknown function.", line);
+		return LogError(std::string("Unknown function: ") + callee, line);
 
 	if (func->arg_size() != args.size())
 		return LogError("Incorrect # arguments passed", line);
@@ -196,39 +197,27 @@ llvm::Function *dia::Function::codegen()
 	for (auto &arg : f->args())
 		NamedValues[arg.getName()] = &arg;
 
-	for (int i = 0; i < body.size() - 1; i++)
-		cast_codegen(body.at(i), get_type(prototype->ret_type));
-
-	llvm::Value *ret;
-	// std::cout << body.back()->type << std::endl;
-	// std::cout << f->getReturnType()->isDoubleTy() << std::endl;
-	if (body.back()->type.compare("if") == 0)
+	for (int i = 0; i < body.size(); i++)
 	{
-		ret = body.back()->codegen(f->getReturnType());
-		llvm::verifyFunction(*f);
-		return f;
-	}
-	else
-		ret = body.back()->codegen();
-
-	if (ret)
-	{
-		llvm::Type *rt = f->getReturnType();
-		if (rt->getTypeID() != ret->getType()->getTypeID())
+		bool br = false;
+		if (!body.at(i)->type.compare("give"))
+			br = true;
+		cast_codegen(std::move(body.at(i)), f->getReturnType());
+		if (br)
 		{
-			if (ret->getType()->isDoubleTy())
-				ret = Builder.CreateFPToSI(ret, llvm::Type::getInt32Ty(TheContext), "casttmp");
-			else if (ret->getType()->isIntegerTy())
-				ret = Builder.CreateSIToFP(ret, llvm::Type::getDoubleTy(TheContext), "casttmp");
+			if (i != body.size() - 1)
+				LogError("Skipping everything after the return statment", line);
+			break;
 		}
-		// if()
-		Builder.CreateRet(ret);
-		llvm::verifyFunction(*f);
-		return f;
 	}
 
-	f->eraseFromParent();
-	return nullptr;
+	llvm::verifyFunction(*f);
+	if (!f)
+	{
+		f->eraseFromParent();
+		return nullptr;
+	}
+	return f;
 }
 
 llvm::Value *dia::Char::codegen()
@@ -262,7 +251,7 @@ llvm::Value *dia::If::codegen(llvm::Type *cast_to)
 	std::vector<llvm::Value *> thenv({});
 	for (int i = 0; i < Then.size(); i++)
 	{
-		thenv.push_back(Then.at(i)->codegen());
+		thenv.push_back(cast_codegen(std::move(Then.at(i)), cast_to));
 		if (!thenv.back())
 			return nullptr;
 		if (thenv.back()->getType()->isDoubleTy())
@@ -270,12 +259,8 @@ llvm::Value *dia::If::codegen(llvm::Type *cast_to)
 		if (thenv.back()->getType()->isIntegerTy())
 			has_ints = true;
 	}
-	if (!thenv.back())
-		return nullptr;
 
-	Builder.CreateRet(type_cast(thenv.back(), cast_to));
-
-	// Builder.CreateBr(mergebb);
+	Builder.CreateBr(mergebb);
 	thenbb = Builder.GetInsertBlock();
 
 	function->getBasicBlockList().push_back(elsebb);
@@ -284,7 +269,7 @@ llvm::Value *dia::If::codegen(llvm::Type *cast_to)
 	std::vector<llvm::Value *> elsev({});
 	for (int i = 0; i < Else.size(); i++)
 	{
-		elsev.push_back(Else.at(i)->codegen());
+		elsev.push_back(cast_codegen(std::move(Else.at(i)), cast_to));
 		if (!elsev.back())
 			return nullptr;
 		if (thenv.back()->getType()->isDoubleTy())
@@ -292,16 +277,12 @@ llvm::Value *dia::If::codegen(llvm::Type *cast_to)
 		if (thenv.back()->getType()->isIntegerTy())
 			has_ints = true;
 	}
-	if (!elsev.back())
-		return nullptr;
 
-	return Builder.CreateRet(type_cast(elsev.back(), cast_to));
+	Builder.CreateBr(mergebb);
+	elsebb = Builder.GetInsertBlock();
 
-	// Builder.CreateBr(mergebb);
-	// elsebb = Builder.GetInsertBlock();
-
-	// function->getBasicBlockList().push_back(mergebb);
-	// Builder.SetInsertPoint(mergebb);
+	function->getBasicBlockList().push_back(mergebb);
+	Builder.SetInsertPoint(mergebb);
 	// llvm::PHINode *pnd;
 	// llvm::PHINode *pni;
 	// if (has_doubles)
@@ -401,11 +382,11 @@ llvm::Value *dia::From::codegen()
 	return llvm::Constant::getNullValue(llvm::Type::getDoubleTy(TheContext));
 }
 
-dia::Give::codegen()
+llvm::Value *dia::Give::codegen()
 {
 	return codegen(llvm::Type::getInt32Ty(TheContext));
 }
-dia::Give::codegen(llvm::Type *cast_to)
+llvm::Value *dia::Give::codegen(llvm::Type *cast_to)
 {
-	return Builder.CreateRet(type_cast(val->codegen(), cast_to));
+	return Builder.CreateRet(type_cast(give->codegen(), cast_to));
 }

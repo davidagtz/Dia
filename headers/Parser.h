@@ -88,7 +88,11 @@ class Parser
 		auto body = parseExprBlock();
 		if (!body.back())
 			return nullptr;
-		return std::make_unique<dia::From>(idname, std::move(start), std::move(end), std::move(Step), std::move(body));
+		return std::make_unique<dia::From>(idname,
+										   std::move(start),
+										   std::move(end),
+										   std::move(Step),
+										   std::move(body));
 	};
 
 	std::unique_ptr<dia::Base> parseIden()
@@ -113,7 +117,8 @@ class Parser
 					break;
 				}
 				if (!tok().valis(","))
-					return LogError<dia::Base>(std::string("Expected ',' or ')', but got ") + std::string(tok().val()));
+					return LogError<dia::Base>(std::string("Expected ',' or ')', but got ") +
+											   std::string(tok().val()));
 				advance();
 			}
 		else
@@ -278,7 +283,9 @@ class Parser
 		auto else_expr_block = parseExprBlock();
 		if (!else_expr_block.back())
 			return nullptr;
-		return std::make_unique<dia::If>(std::move(cond_expr), std::move(then_expr_block), std::move(else_expr_block));
+		return std::make_unique<dia::If>(std::move(cond_expr),
+										 std::move(then_expr_block),
+										 std::move(else_expr_block));
 	}
 
 	std::unique_ptr<dia::Function> parseDef()
@@ -327,7 +334,9 @@ class Parser
 			return nullptr;
 		std::vector<std::unique_ptr<dia::Base>> body({});
 		body.push_back(std::move(expr));
-		auto proto = std::make_unique<dia::Prototype>("", std::vector<std::pair<std::string, Return>>(), Return::decimal);
+		auto proto = std::make_unique<dia::Prototype>("",
+													  std::vector<std::pair<std::string, Return>>(),
+													  Return::decimal);
 		return std::make_unique<dia::Function>(std::move(proto), std::move(body));
 	}
 
@@ -358,6 +367,15 @@ class Parser
 	void advance() { advance(1); };
 	void advance(int i)
 	{
+		// int j = 0;
+		// while (i != j && pos < size())
+		// {
+		// 	do
+		// 	{
+		// 		pos++;
+		// 		j++;
+		// 	} while (pos < size() && tok().idis(eol));
+		// }
 		if (pos + i >= tokens.size())
 		{
 			pos = tokens.size() - 1;

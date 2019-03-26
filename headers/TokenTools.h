@@ -67,7 +67,7 @@ class token
 		return (value == "\n" ? "eol" : value) + " " + std::to_string(id);
 	}
 
-	token(std::string val, int identifier, unsigned long long line) : value(val), id(identifier) {}
+	token(std::string val, int identifier, unsigned long long line) : value(val), id(identifier), line(line) {}
 	token() {}
 
 	bool valis(std::string val) { return value.compare(val) == 0; }
