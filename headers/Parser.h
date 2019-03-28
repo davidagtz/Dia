@@ -282,12 +282,16 @@ class Parser
 		auto then_expr_block = parseExprBlock();
 		if (!then_expr_block.back())
 			return nullptr;
+		vector<unique_ptr<Base>> else_expr_block({});
 		if (!tok().idis(tok_else))
-			return LogError<If>("Expected else statement.");
-		advance();
-		auto else_expr_block = parseExprBlock();
-		if (!else_expr_block.back())
-			return nullptr;
+			else_expr_block.push_back(move(make_unique<Number>(1)));
+		else
+		{
+			advance();
+			else_expr_block = parseExprBlock();
+			if (!else_expr_block.back())
+				return nullptr;
+		}
 		return make_unique<If>(move(cond_expr), move(then_expr_block), move(else_expr_block));
 	}
 

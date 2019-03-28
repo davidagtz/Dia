@@ -69,7 +69,7 @@ int main(int argc, char **argv)
 		}
 		cout << "\e[92m--------------------------------\e[0m" << endl;
 	}
-
+	// Builder.SetInsertPoint(fmain->GetBlo);
 	Builder.CreateRet(llvm::ConstantInt::get(TheContext, llvm::APInt(32, 0)));
 	llvm::verifyFunction(*fmain);
 
