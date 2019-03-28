@@ -7,28 +7,19 @@
 
 namespace tools
 {
-
-std::string getFile(std::string &fileName)
+std::string getFile(std::string fileName)
 {
 	using namespace std;
 
 	ifstream in;
-
 	in.open(fileName);
 
 	if (in.is_open())
 	{
-		// cout << "Opened File." << endl;
-
 		string file("");
-
 		while (!in.eof())
-		{
 			file += in.get();
-		}
-
 		in.close();
-
 		return file;
 	}
 	else
@@ -37,11 +28,9 @@ std::string getFile(std::string &fileName)
 		return nullptr;
 	}
 }
-
 void arrToString(char **oarg, std::string *args, int &argc)
 {
 	for (int i = 0; i < argc; i++)
 		args[i] = std::string(oarg[i]);
 }
-
 }; // namespace tools

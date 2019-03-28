@@ -19,11 +19,11 @@
 #include "headers/Expr.h"
 #include "headers/Lexer.h"
 #include "headers/Parser.h"
-#include "headers/codegen.h"
 void shell();
 llvm::Function *getMainFunction();
 
 using namespace std;
+using namespace dia;
 
 int main(int argc, char **argv)
 {
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 		if (tokens.at(i).idis(errHandle))
 			return 1;
 
-	Parser parse(std::move(tokens));
+	Parser parse(move(tokens));
 
 	llvm::Function *fmain = getMainFunction();
 	llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", fmain);
@@ -60,11 +60,14 @@ int main(int argc, char **argv)
 		case eol:
 			parse.advance();
 			break;
+		case tok_inc:
+			parse.parseInclude();
+			break;
 		default:
 			parse.handle_top_level(fmain, BB);
 			break;
 		}
-		cout << "\e[92m--------------------------------\e[0m" << std::endl;
+		cout << "\e[92m--------------------------------\e[0m" << endl;
 	}
 
 	Builder.CreateRet(llvm::ConstantInt::get(TheContext, llvm::APInt(32, 0)));
@@ -101,11 +104,6 @@ void shell()
 
 		Parser p(t);
 
-		// for (token to : t)
-		// {
-		// 	cout << to.val() + " " << to.getid() << endl;
-		// }
-
 		switch (t.at(0).getid())
 		{
 		case def:
@@ -131,9 +129,6 @@ llvm::Function *getMainFunction()
 
 	if (!f2)
 		f2 = f;
-
-	if (!f2)
-		return nullptr;
 
 	return f2;
 }

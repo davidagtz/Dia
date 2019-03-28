@@ -20,8 +20,7 @@ enum tok_id
 	chr,
 	tok_if,
 	tok_else,
-	cmt,
-	inc,
+	tok_inc,
 	tok_from,
 	tok_is,
 	tok_to,
@@ -147,6 +146,8 @@ class FileTokenizer
 				id = tok_step;
 			else if (equals(value, "give"))
 				id = tok_give;
+			else if (equals(value, "include"))
+				id = tok_inc;
 			else if (contains(keywords, value))
 				id = keyword;
 			else if (contains(types, value))

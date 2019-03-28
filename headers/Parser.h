@@ -8,16 +8,17 @@
 #include "ReturnTypes.h"
 
 #define ull unsigned long long
-
+namespace dia
+{
 class Parser
 {
 	ull line;
-	std::map<std::string, int> binop;
+	map<string, int> binop;
 
   public:
-	std::vector<token> tokens;
+	vector<token> tokens;
 	ull pos;
-	Parser(std::vector<token> toks) : tokens(toks), binop(), pos(0), line(0)
+	Parser(vector<token> toks) : tokens(toks), binop(), pos(0), line(0)
 	{
 		binop["("] = 40;
 		binop["*"] = 30;
@@ -35,49 +36,49 @@ class Parser
 
 	int size() { return tokens.size(); };
 
-	std::unique_ptr<dia::Base> parseNumber()
+	unique_ptr<Base> parseNumber()
 	{
-		auto num = std::move(std::make_unique<dia::Number>(std::stoi(tokens.at(pos).val())));
+		auto num = move(make_unique<Number>(stoi(tokens.at(pos).val())));
 		advance();
 		return num;
 	};
 
-	std::unique_ptr<dia::Base> parseParenExpr()
+	unique_ptr<Base> parseParenExpr()
 	{
 		advance();
 		auto expr = parseExpr();
 		if (!expr)
 			return nullptr;
 		if (!tok().valis(")"))
-			return LogError<dia::Base>("expected ')'");
+			return LogError<Base>("expected ')'");
 		advance();
 		return expr;
 	};
 
-	std::unique_ptr<dia::Base> parseFrom()
+	unique_ptr<Base> parseFrom()
 	{
 		if (!tok().idis(tok_from))
-			return LogError<dia::Base>("Expected to see 'from'");
+			return LogError<Base>("Expected to see 'from'");
 		advance();
 		if (!tok().idis(iden))
-			return LogError<dia::Base>("Expected to see variable name");
-		std::string idname = tok().val();
+			return LogError<Base>("Expected to see variable name");
+		string idname = tok().val();
 		advance();
 		if (!tok().idis(tok_is))
-			return LogError<dia::Base>("Expected to see 'is'");
+			return LogError<Base>("Expected to see 'is'");
 		advance();
 		auto start = parseExpr();
 		if (!start)
 			return nullptr;
 		if (!tok().idis(tok_to))
-			return LogError<dia::Base>("Expected to see 'to'");
+			return LogError<Base>("Expected to see 'to'");
 		advance();
-		std::cout << tok().id << " " << tok().val() << std::endl;
+		cout << tok().id << " " << tok().val() << endl;
 		auto end = parseExpr();
-		std::cout << end->val << std::endl;
+		cout << end->val << endl;
 		if (!end)
 			return nullptr;
-		std::unique_ptr<dia::Base> Step = nullptr;
+		unique_ptr<Base> Step = nullptr;
 		if (tok().idis(tok_step))
 		{
 			advance();
@@ -88,27 +89,23 @@ class Parser
 		auto body = parseExprBlock();
 		if (!body.back())
 			return nullptr;
-		return std::make_unique<dia::From>(idname,
-										   std::move(start),
-										   std::move(end),
-										   std::move(Step),
-										   std::move(body));
+		return make_unique<From>(idname, move(start), move(end), move(Step), move(body));
 	};
 
-	std::unique_ptr<dia::Base> parseIden()
+	unique_ptr<Base> parseIden()
 	{
-		std::string idname = tok().val();
+		string idname = tok().val();
 		advance();
 		if (!tok().valis("("))
-			return std::make_unique<dia::Variable>(idname);
+			return make_unique<Variable>(idname);
 		advance();
-		std::vector<std::unique_ptr<dia::Base>> args;
+		vector<unique_ptr<Base>> args;
 		if (!tok().valis(")"))
 			while (1)
 			{
 				auto Arg = parseExpr();
 				if (Arg)
-					args.push_back(std::move(Arg));
+					args.push_back(move(Arg));
 				else
 					return nullptr;
 				if (tok().valis(")"))
@@ -117,17 +114,17 @@ class Parser
 					break;
 				}
 				if (!tok().valis(","))
-					return LogError<dia::Base>(std::string("Expected ',' or ')', but got ") +
-											   std::string(tok().val()));
+					return LogError<Base>(string("Expected ',' or ')', but got ") +
+										  string(tok().val()));
 				advance();
 			}
 		else
 			advance();
 
-		return std::make_unique<dia::Call>(idname, std::move(args));
+		return make_unique<Call>(idname, move(args));
 	};
 
-	std::unique_ptr<dia::Base> parsePrimary()
+	unique_ptr<Base> parsePrimary()
 	{
 		switch (tok().getid())
 		{
@@ -146,43 +143,55 @@ class Parser
 		case tok_give:
 			return parseGive();
 		default:
-			return LogError<dia::Base>(std::string("Unexpected Token") + tok().toString() + tok().val());
+			return LogError<Base>(string("Line: ") + to_string(tok().line) + string(" Unexpected Token: ") + tok().toString());
 		}
 	};
 
-	std::unique_ptr<dia::Give> parseGive()
+	void parseInclude()
+	{
+		advance();
+		cout << tok().idis(tok_str) << endl;
+		if (!tok().idis(tok_str))
+		{
+			LogError<Base>("Expected to see string after include statement");
+			return;
+		}
+		vector<token> ts = FileTokenizer(tools::getFile(tok().val())).getTokens();
+		advance();
+		tokens.insert(tokens.begin() + pos, ts.begin(), ts.end() - 1);
+	}
+
+	unique_ptr<Give> parseGive()
 	{
 		advance();
 		auto ret = parseExpr();
 		if (!ret)
 			return nullptr;
-		return std::make_unique<dia::Give>(std::move(ret));
+		return make_unique<Give>(move(ret));
 	}
 
-	std::unique_ptr<dia::Char> parseChar()
+	unique_ptr<Char> parseChar()
 	{
-		auto chr = std::move(std::make_unique<dia::Char>(tokens.at(pos).val()[0]));
+		auto chr = move(make_unique<Char>(tokens.at(pos).val()[0]));
 		advance();
 		return chr;
 	}
 
-	std::unique_ptr<dia::Base> parseExpr()
+	unique_ptr<Base> parseExpr()
 	{
 		auto left = parsePrimary();
 		if (!left)
 			return nullptr;
-		return parseRightBinop(0, std::move(left));
+		return parseRightBinop(0, move(left));
 	};
 
-	std::unique_ptr<dia::Base> parseRightBinop(int oprec, std::unique_ptr<dia::Base> left)
+	unique_ptr<Base> parseRightBinop(int oprec, unique_ptr<Base> left)
 	{
 		while (1)
 		{
 			int prec = getPrec();
 			if (getPrec() < oprec)
-			{
 				return left;
-			}
 			char comp = tok().val()[0];
 			advance();
 			auto right = parsePrimary();
@@ -191,17 +200,15 @@ class Parser
 			int nprec = getPrec();
 			if (prec < nprec)
 			{
-				right = parseRightBinop(prec + 1, std::move(right));
+				right = parseRightBinop(prec + 1, move(right));
 				if (!right)
-				{
 					return nullptr;
-				}
 			}
-			left = std::make_unique<dia::Binary>(comp, std::move(left), std::move(right));
+			left = make_unique<Binary>(comp, move(left), move(right));
 		};
 	};
 
-	std::unique_ptr<dia::Prototype> parsePrototype(bool isExtern = false)
+	unique_ptr<Prototype> parsePrototype(bool isExtern = false)
 	{
 		// Get the Return Type
 		Return ret_type = Return::decimal;
@@ -209,29 +216,29 @@ class Parser
 		{
 			ret_type = getReturnType(tok().val());
 			if (ret_type == Return::not_a_type)
-				return LogError<dia::Prototype>("Expected function in prototype");
+				return LogError<Prototype>("Expected function in prototype");
 			advance();
 		}
 
 		// Get the name
-		std::string fname = tok().val();
+		string fname = tok().val();
 		advance();
 
 		// Get the arguments
 		if (!tok().valis("("))
-			return LogError<dia::Prototype>("Expected '(' in header");
+			return LogError<Prototype>("Expected '(' in header");
 		advance();
-		std::vector<std::pair<std::string, Return>> args;
+		vector<pair<string, Return>> args;
 		// used for externs if there is no name
 		char id = 'A';
 		while (tok().idis(iden) || tok().idis(type))
 		{
-			std::pair<std::string, Return> arg("", Return::not_a_type);
+			pair<string, Return> arg("", Return::not_a_type);
 			Return t = getReturnType(tok().val());
 			if (t == Return::not_a_type)
 			{
 				if (isExtern)
-					return LogError<dia::Prototype>("Expected type declaration in extern header.");
+					return LogError<Prototype>("Expected type declaration in extern header.");
 				t = Return::decimal;
 			}
 			else
@@ -249,7 +256,7 @@ class Parser
 					args.push_back(arg);
 					goto end_define;
 				}
-				return LogError<dia::Prototype>("Not a valid identifier in the arguments");
+				return LogError<Prototype>("Not a valid identifier in the arguments");
 			}
 			args.push_back(arg);
 			advance();
@@ -259,59 +266,53 @@ class Parser
 			advance();
 		}
 		if (!tok().valis(")"))
-			return LogError<dia::Prototype>("Expected ')' in header. Saw " + tok().val());
+			return LogError<Prototype>("Expected ')' in header. Saw " + tok().val());
 		advance();
-		return std::make_unique<dia::Prototype>(fname, std::move(args), ret_type);
+		return make_unique<Prototype>(fname, move(args), ret_type);
 	};
 
-	std::unique_ptr<dia::If> parseIf()
+	unique_ptr<If> parseIf()
 	{
-		if (!tok().valis("if"))
-			return LogError<dia::If>("Expected 'if'");
 		advance();
 		if (!tok().valis("("))
-			return LogError<dia::If>("Expected condition starting with '('");
+			return LogError<If>("Expected condition starting with '('");
 		auto cond_expr = parseExpr();
 		if (!cond_expr)
 			return nullptr;
 		auto then_expr_block = parseExprBlock();
 		if (!then_expr_block.back())
 			return nullptr;
-		if (!tok().valis("else"))
-			return LogError<dia::If>("Expected else statement.");
+		if (!tok().idis(tok_else))
+			return LogError<If>("Expected else statement.");
 		advance();
 		auto else_expr_block = parseExprBlock();
 		if (!else_expr_block.back())
 			return nullptr;
-		return std::make_unique<dia::If>(std::move(cond_expr),
-										 std::move(then_expr_block),
-										 std::move(else_expr_block));
+		return make_unique<If>(move(cond_expr), move(then_expr_block), move(else_expr_block));
 	}
 
-	std::unique_ptr<dia::Function> parseDef()
+	unique_ptr<Function> parseDef()
 	{
-		if (!tok().valis("fn"))
-			return LogError<dia::Function>("Expected Function declaration to start with 'fn'");
 		advance();
 		auto proto = parsePrototype();
 		if (!proto)
 			return nullptr;
-		std::vector<std::unique_ptr<dia::Base>> body(parseExprBlock());
+		vector<unique_ptr<Base>> body(parseExprBlock());
 		if (!body.back())
 			return nullptr;
-		return std::make_unique<dia::Function>(std::move(proto), std::move(body));
+		return make_unique<Function>(move(proto), move(body));
 	};
 
-	std::vector<std::unique_ptr<dia::Base>> parseExprBlock()
+	vector<unique_ptr<Base>> parseExprBlock()
 	{
-		std::vector<std::unique_ptr<dia::Base>> body({});
+		vector<unique_ptr<Base>> body({});
 		if (tok().valis("{"))
 		{
 			advance();
 			while (!tok().valis("}"))
 			{
 				auto expr = parseExpr();
-				body.push_back(std::move(expr));
+				body.push_back(move(expr));
 				if (!body.back())
 					return body;
 			}
@@ -320,27 +321,25 @@ class Parser
 		else
 		{
 			auto expr = parseExpr();
-			body.push_back(std::move(expr));
+			body.push_back(move(expr));
 			if (!body.back())
 				return body;
 		}
 		return body;
 	}
 
-	std::unique_ptr<dia::Function> parseTopLevel()
+	unique_ptr<Function> parseTopLevel()
 	{
 		auto expr = parseExpr();
 		if (!expr)
 			return nullptr;
-		std::vector<std::unique_ptr<dia::Base>> body({});
-		body.push_back(std::move(expr));
-		auto proto = std::make_unique<dia::Prototype>("",
-													  std::vector<std::pair<std::string, Return>>(),
-													  Return::decimal);
-		return std::make_unique<dia::Function>(std::move(proto), std::move(body));
+		vector<unique_ptr<Base>> body({});
+		body.push_back(move(expr));
+		auto proto = make_unique<Prototype>("", vector<pair<string, Return>>(), Return::decimal);
+		return make_unique<Function>(move(proto), move(body));
 	}
 
-	Return getReturnType(std::string ret)
+	Return getReturnType(string ret)
 	{
 		if (equals(ret, "int"))
 			return Return::integer;
@@ -355,8 +354,6 @@ class Parser
 
 	int getPrec()
 	{
-		// if (!isalpha(tok().val().at(0)))
-		// 	return -1;
 		int prec = binop[tok().val()];
 		if (prec <= 0)
 			return -1;
@@ -364,37 +361,17 @@ class Parser
 	};
 
 	token tok() { return tokens.at(pos); };
-	void advance() { advance(1); };
-	void advance(int i)
+	void advance()
 	{
-		// int j = 0;
-		// while (i != j && pos < size())
-		// {
-		// 	do
-		// 	{
-		// 		pos++;
-		// 		j++;
-		// 	} while (pos < size() && tok().idis(eol));
-		// }
-		if (pos + i >= tokens.size())
-		{
-			pos = tokens.size() - 1;
-		}
-		else
-		{
-			pos += i;
-			while (tok().idis(eol))
-			{
-				pos += 1;
-				line += 1;
-			}
-		}
+		do
+			pos++;
+		while (tok().idis(eol) && pos < size());
 	};
 
 	template <class T>
-	std::unique_ptr<T> LogError(std::string msg)
+	unique_ptr<T> LogError(string msg)
 	{
-		std::cerr << "Line " << line << ": " << msg << std::endl;
+		cerr << "Line " << line << ": " << msg << endl;
 		return nullptr;
 	};
 	void handle_top_level(llvm::Function *f, llvm::BasicBlock *BB);
@@ -403,3 +380,4 @@ class Parser
 };
 
 #include "handlers.h"
+} // namespace dia
