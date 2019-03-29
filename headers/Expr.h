@@ -1,20 +1,5 @@
 #pragma once
 
-#include <vector>
-#include <memory>
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/ADT/APFloat.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/Type.h"
-#include "llvm/IR/Verifier.h"
-#include "llvm/IR/Module.h"
-#include "ReturnTypes.h"
-
 namespace dia
 {
 using namespace std;
@@ -55,12 +40,12 @@ public:
 
 class Binary : public Base
 {
-	char op;
+	string op;
 	unique_ptr<Base> LHS;
 	unique_ptr<Base> RHS;
 
 public:
-	Binary(char oper, unique_ptr<Base> left, unique_ptr<Base> right)
+	Binary(string oper, unique_ptr<Base> left, unique_ptr<Base> right)
 			: op(oper), LHS(move(left)), RHS(move(right)) { type = "expression"; };
 	llvm::Value *codegen() override;
 };
@@ -128,7 +113,8 @@ class If : public Base
 	// string type;
 
 public:
-	If(unique_ptr<Base> cond, vector<unique_ptr<Base>> then, vector<unique_ptr<Base>> Else_a) : Cond(move(cond))
+	If(unique_ptr<Base> cond, vector<unique_ptr<Base>> then, vector<unique_ptr<Base>> Else_a)
+			: Cond(move(cond))
 	{
 		type = "if";
 		for (int i = 0; i < then.size(); i++)

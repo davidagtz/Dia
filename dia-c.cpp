@@ -15,10 +15,14 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
+#include "headers/goodFiles.h"
 #include "headers/TokenTools.h"
+#include "headers/ReturnTypes.h"
 #include "headers/Expr.h"
+#include "headers/codegen.h"
 #include "headers/Lexer.h"
 #include "headers/Parser.h"
+#include "headers/handlers.h"
 void shell();
 llvm::Function *getMainFunction();
 

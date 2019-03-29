@@ -4,6 +4,9 @@
 #include <string>
 #include "Expr.h"
 #include "ReturnTypes.h"
+
+namespace dia
+{
 using namespace llvm;
 #define MakeFPType Type::getDoubleTy(TheContext)
 #define Makei32Type Type::getInt32Ty(TheContext)
@@ -76,32 +79,45 @@ llvm::Value *Binary::codegen()
 		R = Builder.CreateSIToFP(R, MakeFPType, "casttmp");
 
 	// Switch for greater than to less than
-	if (op == '>')
+	if (op == ">")
 	{
 		llvm::Value *t = L;
 		L = R;
 		R = t;
-		op = '<';
+		op = "<";
 	}
 
-	switch (op)
-	{
-	case '+':
+	if (op == "+")
 		return Builder.CreateFAdd(L, R, "addtmp");
-	case '-':
+	else if (op == "-")
 		return Builder.CreateFSub(L, R, "subtmp");
-	case '*':
+	else if (op == "*")
 		return Builder.CreateFMul(L, R, "multmp");
-	case '/':
+	else if (op == "/")
 		return Builder.CreateFDiv(L, R, "fdivtmp");
-	case '<':
+	else if (op == "<")
+	{
 		L = Builder.CreateFCmpULT(L, R, "cmptmp");
-		return Builder.CreateUIToFP(L, MakeFPType,
-									"booltmp");
-	default:
-		return LogError("invalid binary operator", line);
+		return Builder.CreateUIToFP(L, MakeFPType, "booltmp");
 	}
-};
+	else if (op == "==")
+	{
+		L = Builder.CreateFCmpUEQ(L, R, "cmptmp");
+		return Builder.CreateUIToFP(L, MakeFPType, "booltmp");
+	}
+	else if (op == ">=")
+	{
+		L = Builder.CreateFCmpUGE(L, R, "cmptmp");
+		return Builder.CreateUIToFP(L, MakeFPType, "booltmp");
+	}
+	else if (op == "<=")
+	{
+		L = Builder.CreateFCmpULE(L, R, "cmptmp");
+		return Builder.CreateUIToFP(L, MakeFPType, "booltmp");
+	}
+	else
+		return LogError("invalid binary operator", line);
+}
 
 llvm::Value *Call::codegen()
 {
@@ -379,4 +395,5 @@ llvm::Value *Give::codegen()
 llvm::Value *Give::codegen(Type *cast_to)
 {
 	return Builder.CreateRet(type_cast(give->codegen(), cast_to));
+}
 }

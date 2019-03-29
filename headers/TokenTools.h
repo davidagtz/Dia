@@ -10,7 +10,7 @@ enum tok_id
 	tok_str,
 	tok_bln,
 	tok_op,
-	paren,
+	tok_paren,
 	iden,
 	def,
 	eol,
@@ -35,8 +35,25 @@ enum tok_id
 std::vector<std::string> keywords({});
 std::vector<std::string> types({"int",
 								"fp"});
+std::map<std::string, int> binop({
+	{"(", 40},
+	{"*", 30},
+	{"/", 30},
+	{"+", 20},
+	{"-", 20},
+	{">", 10},
+	{"<", 10},
+	{"==", 10},
+	{"<=", 10},
+	{">=", 10},
+});
+// If some contain others, put the longer ones first
+std::vector<std::string> ops({"*", "/", "+", "-", "<=", ">=", ">", "<", "=="});
 
-bool isparen(char a) { return a == '(' || a == ')'; }
+bool isparen(char a)
+{
+	return a == '(' || a == ')';
+}
 bool isnewline(char a) { return a == '\n'; }
 bool isquote(char a) { return a == 0x22; }
 bool issinglequote(char a) { return a == '\''; }
@@ -56,6 +73,8 @@ bool contains(std::vector<std::string> list, std::string str)
 
 class token
 {
+#define curChar file.at(pos)
+#define to(i) (file.at(pos + i))
   public:
 	std::string value;
 	int id;
@@ -90,13 +109,24 @@ class FileTokenizer
 
   public:
 	FileTokenizer(std::string thefile) : tokens(), file(thefile), pos(0), line(1) {}
+	std::string getop()
+	{
+		for (auto arg : ops)
+		{
+			for (int i = 0; i < arg.size(); i++)
+			{
+				if (to(i) != arg[i])
+					break;
+				if (arg.size() - 1 == i)
+					return arg;
+			}
+		}
+		return "";
+	}
 
 	void nextToken()
 	{
 		using namespace std;
-
-#define curChar file.at(pos)
-#define to(i) (file.at(pos + i))
 
 		string value = string(1, curChar);
 		int id = -1;
@@ -176,7 +206,13 @@ class FileTokenizer
 		}
 		else if (isparen(curChar))
 		{
-			id = paren;
+			id = tok_paren;
+		}
+		else if (auto op = getop(); op != "")
+		{
+			id = tok_op;
+			value = op;
+			pos += value.size();
 		}
 		else if (isnewline(curChar))
 		{

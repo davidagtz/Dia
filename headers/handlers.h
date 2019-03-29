@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Expr.h"
-#include "codegen.h"
-
+namespace dia
+{
 void Parser::handle_top_level(llvm::Function *f = nullptr, llvm::BasicBlock *BB = nullptr)
 {
     if (f && BB)
@@ -87,3 +86,4 @@ void Parser::handle_extern()
     }
     return;
 };
+} // namespace dia

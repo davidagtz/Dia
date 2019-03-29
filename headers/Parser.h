@@ -1,33 +1,16 @@
 #pragma once
 
-#include <vector>
-#include <memory>
-#include <map>
-#include "TokenTools.h"
-#include "Expr.h"
-#include "ReturnTypes.h"
-
 #define ull unsigned long long
 namespace dia
 {
 class Parser
 {
 	ull line;
-	map<string, int> binop;
 
   public:
 	vector<token> tokens;
 	ull pos;
-	Parser(vector<token> toks) : tokens(toks), binop(), pos(0), line(0)
-	{
-		binop["("] = 40;
-		binop["*"] = 30;
-		binop["/"] = 30;
-		binop["+"] = 20;
-		binop["-"] = 20;
-		binop[">"] = 10;
-		binop["<"] = 10;
-	};
+	Parser(vector<token> toks) : tokens(toks), pos(0), line(0){};
 
 	token at(int i)
 	{
@@ -38,7 +21,7 @@ class Parser
 
 	unique_ptr<Base> parseNumber()
 	{
-		auto num = move(make_unique<Number>(stoi(tokens.at(pos).val())));
+		auto num = std::make_unique<Number>(stod(tokens.at(pos).val()));
 		advance();
 		return num;
 	};
@@ -89,7 +72,7 @@ class Parser
 		auto body = parseExprBlock();
 		if (!body.back())
 			return nullptr;
-		return make_unique<From>(idname, move(start), move(end), move(Step), move(body));
+		return std::make_unique<From>(idname, move(start), move(end), move(Step), move(body));
 	};
 
 	unique_ptr<Base> parseIden()
@@ -97,7 +80,7 @@ class Parser
 		string idname = tok().val();
 		advance();
 		if (!tok().valis("("))
-			return make_unique<Variable>(idname);
+			return std::make_unique<Variable>(idname);
 		advance();
 		vector<unique_ptr<Base>> args;
 		if (!tok().valis(")"))
@@ -121,7 +104,7 @@ class Parser
 		else
 			advance();
 
-		return make_unique<Call>(idname, move(args));
+		return std::make_unique<Call>(idname, move(args));
 	};
 
 	unique_ptr<Base> parsePrimary()
@@ -130,7 +113,7 @@ class Parser
 		{
 		case iden:
 			return parseIden();
-		case paren:
+		case tok_paren:
 			return parseParenExpr();
 		case tok_num:
 			return parseNumber();
@@ -167,12 +150,12 @@ class Parser
 		auto ret = parseExpr();
 		if (!ret)
 			return nullptr;
-		return make_unique<Give>(move(ret));
+		return std::make_unique<Give>(move(ret));
 	}
 
 	unique_ptr<Char> parseChar()
 	{
-		auto chr = move(make_unique<Char>(tokens.at(pos).val()[0]));
+		auto chr = move(std::make_unique<Char>(tokens.at(pos).val()[0]));
 		advance();
 		return chr;
 	}
@@ -192,7 +175,7 @@ class Parser
 			int prec = getPrec();
 			if (getPrec() < oprec)
 				return left;
-			char comp = tok().val()[0];
+			string comp = tok().val();
 			advance();
 			auto right = parsePrimary();
 			if (!right)
@@ -204,7 +187,7 @@ class Parser
 				if (!right)
 					return nullptr;
 			}
-			left = make_unique<Binary>(comp, move(left), move(right));
+			left = std::make_unique<Binary>(comp, move(left), move(right));
 		};
 	};
 
@@ -268,7 +251,7 @@ class Parser
 		if (!tok().valis(")"))
 			return LogError<Prototype>("Expected ')' in header. Saw " + tok().val());
 		advance();
-		return make_unique<Prototype>(fname, move(args), ret_type);
+		return std::make_unique<Prototype>(fname, move(args), ret_type);
 	};
 
 	unique_ptr<If> parseIf()
@@ -284,7 +267,7 @@ class Parser
 			return nullptr;
 		vector<unique_ptr<Base>> else_expr_block({});
 		if (!tok().idis(tok_else))
-			else_expr_block.push_back(move(make_unique<Number>(1)));
+			else_expr_block.push_back(move(std::make_unique<Number>(1)));
 		else
 		{
 			advance();
@@ -292,7 +275,7 @@ class Parser
 			if (!else_expr_block.back())
 				return nullptr;
 		}
-		return make_unique<If>(move(cond_expr), move(then_expr_block), move(else_expr_block));
+		return std::make_unique<If>(move(cond_expr), move(then_expr_block), move(else_expr_block));
 	}
 
 	unique_ptr<Function> parseDef()
@@ -304,7 +287,7 @@ class Parser
 		vector<unique_ptr<Base>> body(parseExprBlock());
 		if (!body.back())
 			return nullptr;
-		return make_unique<Function>(move(proto), move(body));
+		return std::make_unique<Function>(move(proto), move(body));
 	};
 
 	vector<unique_ptr<Base>> parseExprBlock()
@@ -339,8 +322,8 @@ class Parser
 			return nullptr;
 		vector<unique_ptr<Base>> body({});
 		body.push_back(move(expr));
-		auto proto = make_unique<Prototype>("", vector<pair<string, Return>>(), Return::decimal);
-		return make_unique<Function>(move(proto), move(body));
+		auto proto = std::make_unique<Prototype>("", vector<pair<string, Return>>(), Return::decimal);
+		return std::make_unique<Function>(move(proto), move(body));
 	}
 
 	Return getReturnType(string ret)
@@ -358,10 +341,7 @@ class Parser
 
 	int getPrec()
 	{
-		int prec = binop[tok().val()];
-		if (prec <= 0)
-			return -1;
-		return prec;
+		return (binop[tok().val()] != 0 && (tok().idis(tok_op) || tok().idis(tok_paren))) ? binop[tok().val()] : -1;
 	};
 
 	token tok() { return tokens.at(pos); };
@@ -382,6 +362,4 @@ class Parser
 	void handle_def();
 	void handle_extern();
 };
-
-#include "handlers.h"
 } // namespace dia

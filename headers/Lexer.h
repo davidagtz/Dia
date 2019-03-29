@@ -2,8 +2,6 @@
 
 #include <vector>
 #include <string>
-#include "goodFiles.h"
-#include "TokenTools.h"
 
 std::string output = "";
 
