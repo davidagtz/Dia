@@ -16,7 +16,7 @@ enum tok_id
 	eol,
 	keyword,
 	ext,
-	type,
+	tok_type,
 	chr,
 	tok_if,
 	tok_else,
@@ -46,9 +46,11 @@ std::map<std::string, int> binop({
 	{"==", 10},
 	{"<=", 10},
 	{">=", 10},
+	{"!=", 10},
+	{"=", 5},
 });
 // If some contain others, put the longer ones first
-std::vector<std::string> ops({"*", "/", "+", "-", "<=", ">=", ">", "<", "=="});
+std::vector<std::string> ops({"*", "/", "+", "-", "<=", ">=", ">", "<", "==", "=", "!="});
 
 bool isparen(char a)
 {
@@ -181,7 +183,7 @@ class FileTokenizer
 			else if (contains(keywords, value))
 				id = keyword;
 			else if (contains(types, value))
-				id = type;
+				id = tok_type;
 			else
 				id = iden;
 		}

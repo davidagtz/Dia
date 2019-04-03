@@ -36,6 +36,7 @@ class Variable : public Base
 public:
 	Variable(string n) : name(n) { type = "variable"; };
 	llvm::Value *codegen() override;
+	string getName() { return name; }
 };
 
 class Binary : public Base
@@ -147,6 +148,7 @@ public:
 		}
 	};
 	llvm::Value *codegen() override;
+	llvm::Value *codegen(llvm::Type *cast_to);
 };
 
 class Give : public Base

@@ -1,5 +1,5 @@
 #!/bin/bash
-./dia res/$1.dia -o $1 1> /dev/null &&
+./dia res/$1.dia -o $1 &&
 llc -filetype=asm $1 &&
 rm $1 &&
 g++ -no-pie $1.s -o $1 && 

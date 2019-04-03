@@ -13,8 +13,18 @@ using namespace llvm;
 
 static llvm::LLVMContext TheContext;
 static llvm::IRBuilder<> Builder(TheContext);
-static map<string, llvm::Value *> NamedValues;
+static map<string, llvm::AllocaInst *> NamedValues;
 static unique_ptr<llvm::Module> TheModule;
+
+AllocaInst *CreateEntryAlloca(llvm::Function *TheFunction, std::string VarName, Type *t)
+{
+	IRBuilder<> TmpB(&TheFunction->getEntryBlock(), TheFunction->getEntryBlock().begin());
+	if (t->isDoubleTy())
+		return TmpB.CreateAlloca(MakeFPType, 0, VarName.c_str());
+	else if (t->isIntegerTy())
+		return TmpB.CreateAlloca(Makei32Type, 0, VarName.c_str());
+	return nullptr;
+}
 
 llvm::Value *cast_codegen(shared_ptr<Base> val, Type *cast_to)
 {
@@ -59,14 +69,38 @@ llvm::Value *Number::codegen()
 
 llvm::Value *Variable::codegen()
 {
-	llvm::Value *V = NamedValues[name];
+	llvm::AllocaInst *V = NamedValues[name];
 	if (!V)
 		return LogError(std::string("Unknown Var Name: ") + name, line);
-	return V;
+	return Builder.CreateLoad(V, name.c_str());
 };
 
 llvm::Value *Binary::codegen()
 {
+	if (op == "=")
+	{
+		dia::Variable *lhs = dynamic_cast<dia::Variable *>(LHS.get());
+		if (!lhs)
+			return LogError("Destination of '=' must be a variable", line);
+		llvm::Value *val = RHS->codegen();
+		if (!val)
+			return nullptr;
+		if (RHS->type == "function" ||
+			RHS->type == "give" ||
+			RHS->type == "from" ||
+			RHS->type == "if" ||
+			RHS->type == "prototype")
+			return LogError("Invalid value for variable", line);
+		llvm::AllocaInst *var = NamedValues[lhs->getName()];
+		if (!var)
+			return LogError("Unknown variable name", line);
+		// cout << (var->getType()->getTypeID()) << " " << (val->getType()->getTypeID()) << endl;
+		// cout << (var->getType()->getTypeID() == type_cast(val, var->getType())->getType()->getTypeID()) << endl
+		//  << endl;
+		Builder.CreateStore(type_cast(val, var->getAllocatedType()), var);
+		return val;
+	}
+
 	llvm::Value *L = LHS->codegen();
 	llvm::Value *R = RHS->codegen();
 	if (!L || !R)
@@ -113,6 +147,11 @@ llvm::Value *Binary::codegen()
 	else if (op == "<=")
 	{
 		L = Builder.CreateFCmpULE(L, R, "cmptmp");
+		return Builder.CreateUIToFP(L, MakeFPType, "booltmp");
+	}
+	else if (op == "!=")
+	{
+		L = Builder.CreateFCmpUNE(L, R, "cmptmp");
 		return Builder.CreateUIToFP(L, MakeFPType, "booltmp");
 	}
 	else
@@ -209,7 +248,11 @@ llvm::Function *Function::codegen()
 
 	NamedValues.clear();
 	for (auto &arg : f->args())
-		NamedValues[arg.getName()] = &arg;
+	{
+		AllocaInst *Alloca = CreateEntryAlloca(f, arg.getName(), arg.getType());
+		Builder.CreateStore(&arg, Alloca);
+		NamedValues[arg.getName()] = Alloca;
+	}
 
 	for (int i = 0; i < body.size(); i++)
 	{
@@ -326,27 +369,31 @@ llvm::Value *If::codegen()
 	return codegen(Makei32Type);
 }
 
-llvm::Value *From::codegen()
+llvm::Value *From::codegen(Type *cast_to)
 {
-	llvm::Value *StartVal = Start->codegen();
-	if (!StartVal)
-		return nullptr;
-
 	llvm::Function *TheFunction = Builder.GetInsertBlock()->getParent();
 	llvm::BasicBlock *PreheaderBB = Builder.GetInsertBlock();
 	llvm::BasicBlock *LoopBB = llvm::BasicBlock::Create(TheContext, "loop", TheFunction);
 
+	llvm::AllocaInst *Alloca = CreateEntryAlloca(TheFunction, idname, MakeFPType);
+
+	llvm::Value *StartVal = Start->codegen();
+	if (!StartVal)
+		return nullptr;
+
+	Builder.CreateStore(StartVal, Alloca, MakeFPType);
+
 	Builder.CreateBr(LoopBB);
 	Builder.SetInsertPoint(LoopBB);
 
-	llvm::PHINode *Variable = Builder.CreatePHI(MakeFPType, 2, idname);
-	Variable->addIncoming(StartVal, PreheaderBB);
+	// llvm::PHINode *Variable = Builder.CreatePHI(MakeFPType, 2, idname);
+	// Variable->addIncoming(StartVal, PreheaderBB);
 
-	llvm::Value *OldVal = NamedValues[idname];
-	NamedValues[idname] = Variable;
+	llvm::AllocaInst *OldVal = NamedValues[idname];
+	NamedValues[idname] = Alloca;
 
 	for (int i = 0; i < Body.size(); i++)
-		if (!Body.at(i)->codegen())
+		if (!cast_codegen(Body.at(i), cast_to))
 			return nullptr;
 
 	llvm::Value *StepVal = nullptr;
@@ -359,26 +406,25 @@ llvm::Value *From::codegen()
 	else
 		StepVal = llvm::ConstantFP::get(TheContext, llvm::APFloat(1.0));
 
-	llvm::Value *NextVar = Builder.CreateFAdd(Variable, StepVal, "nextvar");
+	llvm::Value *CurVar = Builder.CreateLoad(Alloca, idname.c_str());
+	llvm::Value *NextVar = Builder.CreateFAdd(CurVar, StepVal, "nextvar");
+	Builder.CreateStore(NextVar, Alloca);
 
 	llvm::Value *EndCond = End->codegen();
-	cout << End->type << " " << End->val << endl;
 	if (!EndCond)
 		return LogError("End condition not compiled", line);
 
-	cout << "End cond start" << endl;
-	auto EndCondC = Builder.CreateFCmpONE(
-		NextVar, EndCond, "loopcond");
-	cout << "End cond end" << endl;
+	// cout << "End cond start" << endl;
+	auto EndCondC = Builder.CreateFCmpONE(NextVar, EndCond, "loopcond");
+	// cout << "End cond end" << endl;
 
 	llvm::BasicBlock *LoopEndBB = Builder.GetInsertBlock();
-	llvm::BasicBlock *AfterBB =
-		llvm::BasicBlock::Create(TheContext, "afterloop", TheFunction);
+	llvm::BasicBlock *AfterBB = llvm::BasicBlock::Create(TheContext, "afterloop", TheFunction);
 
 	Builder.CreateCondBr(EndCondC, LoopBB, AfterBB);
 	Builder.SetInsertPoint(AfterBB);
 
-	Variable->addIncoming(NextVar, LoopEndBB);
+	// Variable->addIncoming(NextVar, LoopEndBB);
 
 	if (OldVal)
 		NamedValues[idname] = OldVal;
@@ -386,6 +432,10 @@ llvm::Value *From::codegen()
 		NamedValues.erase(idname);
 
 	return llvm::Constant::getNullValue(MakeFPType);
+}
+llvm::Value *From::codegen()
+{
+	return codegen(Makei32Type);
 }
 
 llvm::Value *Give::codegen()
@@ -396,4 +446,4 @@ llvm::Value *Give::codegen(Type *cast_to)
 {
 	return Builder.CreateRet(type_cast(give->codegen(), cast_to));
 }
-}
+} // namespace dia

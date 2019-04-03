@@ -10,7 +10,11 @@ void Parser::handle_top_level(llvm::Function *f = nullptr, llvm::BasicBlock *BB 
 
         NamedValues.clear();
         for (auto &arg : f->args())
-            NamedValues[arg.getName()] = &arg;
+        {
+            AllocaInst *Alloca = CreateEntryAlloca(f, arg.getName(), arg.getType());
+            Builder.CreateStore(&arg, Alloca);
+            NamedValues[arg.getName()] = Alloca;
+        }
 
         auto expr = parseExpr();
         // std::cout << "Start codegen" << std::endl;

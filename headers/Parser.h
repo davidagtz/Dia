@@ -56,9 +56,9 @@ class Parser
 		if (!tok().idis(tok_to))
 			return LogError<Base>("Expected to see 'to'");
 		advance();
-		cout << tok().id << " " << tok().val() << endl;
+		// cout << tok().id << " " << tok().val() << endl;
 		auto end = parseExpr();
-		cout << end->val << endl;
+		// cout << end->val << endl;
 		if (!end)
 			return nullptr;
 		unique_ptr<Base> Step = nullptr;
@@ -119,6 +119,8 @@ class Parser
 			return parseNumber();
 		case chr:
 			return parseChar();
+		// case tok_type:
+		// 	return parseVar();
 		case tok_if:
 			return parseIf();
 		case tok_from:
@@ -130,10 +132,14 @@ class Parser
 		}
 	};
 
+	// unique_ptr<Var> parseVar()
+	// {
+	// }
+
 	void parseInclude()
 	{
 		advance();
-		cout << tok().idis(tok_str) << endl;
+		// cout << tok().idis(tok_str) << endl;
 		if (!tok().idis(tok_str))
 		{
 			LogError<Base>("Expected to see string after include statement");
@@ -214,7 +220,7 @@ class Parser
 		vector<pair<string, Return>> args;
 		// used for externs if there is no name
 		char id = 'A';
-		while (tok().idis(iden) || tok().idis(type))
+		while (tok().idis(iden) || tok().idis(tok_type))
 		{
 			pair<string, Return> arg("", Return::not_a_type);
 			Return t = getReturnType(tok().val());
