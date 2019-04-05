@@ -48,6 +48,17 @@ llvm::Function *LogErrorP(string msg, unsigned long long line)
 	return nullptr;
 }
 
+llvm::Type *Base::getType(Return r)
+{
+	switch (r)
+	{
+	case Return::integer:
+		return Makei32Type;
+	case Return::decimal:
+		return MakeFPType;
+	}
+}
+
 llvm::Value *Base::type_cast(llvm::Value *from, llvm::Type *to, string msg = "")
 {
 	if (from->getType()->isIntegerTy() ^ to->isIntegerTy())
@@ -94,9 +105,6 @@ llvm::Value *Binary::codegen()
 		llvm::AllocaInst *var = NamedValues[lhs->getName()];
 		if (!var)
 			return LogError("Unknown variable name", line);
-		// cout << (var->getType()->getTypeID()) << " " << (val->getType()->getTypeID()) << endl;
-		// cout << (var->getType()->getTypeID() == type_cast(val, var->getType())->getType()->getTypeID()) << endl
-		//  << endl;
 		Builder.CreateStore(type_cast(val, var->getAllocatedType()), var);
 		return val;
 	}
@@ -445,5 +453,20 @@ llvm::Value *Give::codegen()
 llvm::Value *Give::codegen(Type *cast_to)
 {
 	return Builder.CreateRet(type_cast(give->codegen(), cast_to));
+}
+
+llvm::Value *VarInit::codegen()
+{
+	AllocaInst *OldBinding;
+
+	llvm::Function *TheFunction = Builder.GetInsertBlock()->getParent();
+
+	const std::string &VarName = dynamic_cast<Variable *>(dynamic_cast<Binary *>(inst.get())->LHS.get())->name;
+
+	AllocaInst *Alloca = CreateEntryAlloca(TheFunction, VarName, getType(r_type));
+	NamedValues[VarName] = Alloca;
+	Builder.CreateStore(type_cast(inst->codegen(), getType(r_type)), Alloca);
+
+	return Alloca;
 }
 } // namespace dia

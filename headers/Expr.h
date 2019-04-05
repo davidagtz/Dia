@@ -11,6 +11,7 @@ public:
 	virtual llvm::Value *codegen() = 0;
 	virtual llvm::Value *codegen(llvm::Type *type) { codegen(); };
 	virtual llvm::Value *type_cast(llvm::Value *from, llvm::Type *to, string msg);
+	virtual llvm::Type *getType(Return r);
 	string type = "";
 	unsigned long long line = 0;
 	double val = 0;
@@ -31,21 +32,31 @@ public:
 
 class Variable : public Base
 {
-	string name;
 
 public:
+	string name;
 	Variable(string n) : name(n) { type = "variable"; };
 	llvm::Value *codegen() override;
 	string getName() { return name; }
 };
 
+class VarInit : public Base
+{
+	Return r_type;
+	unique_ptr<Base> inst;
+
+public:
+	VarInit(Return r, unique_ptr<Base> inst) : r_type(r), inst(move(inst)) { type = "instantiation"; };
+	llvm::Value *codegen() override;
+};
+
 class Binary : public Base
 {
+
+public:
 	string op;
 	unique_ptr<Base> LHS;
 	unique_ptr<Base> RHS;
-
-public:
 	Binary(string oper, unique_ptr<Base> left, unique_ptr<Base> right)
 			: op(oper), LHS(move(left)), RHS(move(right)) { type = "expression"; };
 	llvm::Value *codegen() override;

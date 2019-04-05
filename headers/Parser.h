@@ -43,7 +43,7 @@ class Parser
 		if (!tok().idis(tok_from))
 			return LogError<Base>("Expected to see 'from'");
 		advance();
-		if (!tok().idis(iden))
+		if (!tok().idis(tok_iden))
 			return LogError<Base>("Expected to see variable name");
 		string idname = tok().val();
 		advance();
@@ -111,7 +111,7 @@ class Parser
 	{
 		switch (tok().getid())
 		{
-		case iden:
+		case tok_iden:
 			return parseIden();
 		case tok_paren:
 			return parseParenExpr();
@@ -119,8 +119,8 @@ class Parser
 			return parseNumber();
 		case chr:
 			return parseChar();
-		// case tok_type:
-		// 	return parseVar();
+		case tok_type:
+			return parseVar();
 		case tok_if:
 			return parseIf();
 		case tok_from:
@@ -132,9 +132,19 @@ class Parser
 		}
 	};
 
-	// unique_ptr<Var> parseVar()
-	// {
-	// }
+	unique_ptr<VarInit> parseVar()
+	{
+		if (!tok().idis(tok_type))
+			return LogError<VarInit>("Expected to see type declaration in front of instantiation");
+		Return type = getReturnType(tok().val());
+		advance();
+		if (!tok().idis(tok_iden))
+			return LogError<VarInit>("Expected to see valid identifier");
+		unique_ptr<Base> expr = parseExpr();
+		if (!expr)
+			return nullptr;
+		return std::make_unique<VarInit>(type, move(expr));
+	}
 
 	void parseInclude()
 	{
@@ -201,7 +211,7 @@ class Parser
 	{
 		// Get the Return Type
 		Return ret_type = Return::decimal;
-		if (!tok().idis(iden))
+		if (!tok().idis(tok_iden))
 		{
 			ret_type = getReturnType(tok().val());
 			if (ret_type == Return::not_a_type)
@@ -220,7 +230,7 @@ class Parser
 		vector<pair<string, Return>> args;
 		// used for externs if there is no name
 		char id = 'A';
-		while (tok().idis(iden) || tok().idis(tok_type))
+		while (tok().idis(tok_iden) || tok().idis(tok_type))
 		{
 			pair<string, Return> arg("", Return::not_a_type);
 			Return t = getReturnType(tok().val());
@@ -234,7 +244,7 @@ class Parser
 				advance();
 			arg.second = t;
 
-			if (tok().idis(iden))
+			if (tok().idis(tok_iden))
 				arg.first = tok().val();
 			else
 			{

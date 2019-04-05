@@ -11,7 +11,7 @@ enum tok_id
 	tok_bln,
 	tok_op,
 	tok_paren,
-	iden,
+	tok_iden,
 	def,
 	eol,
 	keyword,
@@ -185,7 +185,7 @@ class FileTokenizer
 			else if (contains(types, value))
 				id = tok_type;
 			else
-				id = iden;
+				id = tok_iden;
 		}
 		else if (isdigit(curChar) ||
 				 (ishyphen(curChar) && !isdigit(to(-1)) && (isdigit(to(1)) || to(1) == '.')))
