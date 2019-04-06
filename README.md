@@ -6,7 +6,7 @@ Dia is a low-level programming language that writes like a high-level programmin
 
 To compile, simply run the following command
 
-    ./dia-c -i [INPUT FILE NAME HERE]
+    ./dia [INPUT FILE NAME HERE]
 
 ### Flags include
 
